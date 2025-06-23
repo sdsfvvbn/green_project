@@ -1,0 +1,172 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import '../services/database_service.dart';
+import '../models/algae_log.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
+import 'log_page.dart';
+import 'advice_page.dart';
+import 'achievement_page.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final DatabaseService _databaseService = DatabaseService.instance;
+  List<AlgaeLog> _logs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLogs();
+  }
+
+  Future<void> _loadLogs() async {
+    final logs = await _databaseService.getAllLogs();
+    setState(() {
+      _logs = logs;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> facts = [
+      '微藻一年可吸收自身重量10倍的二氧化碳。',
+      '螺旋藻是最常見的可食用微藻之一。',
+      '微藻可用於生產生質燃料與天然色素。',
+      '1公升微藻養殖液一年可吸收約2g二氧化碳。',
+      '微藻能淨化水質，是天然的水體清道夫。',
+      '微藻含有豐富蛋白質與維生素，是超級食物。',
+      '微藻養殖有助於減緩全球暖化。',
+    ];
+    final randomFact = (facts..shuffle()).first;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('個人化微藻養殖APP'),
+        backgroundColor: Colors.green[700],
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: SizedBox(
+                  height: 80,
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Icon(Icons.eco, color: Colors.green[700], size: 64),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(Icons.eco, color: Colors.green[700], size: 32),
+                  const SizedBox(width: 8),
+                  const Text('歡迎來到微藻養殖APP', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text('推廣個人化微藻養殖，讓每個人都能輕鬆減碳、愛地球！', style: TextStyle(color: Colors.teal)),
+              const SizedBox(height: 24),
+              Card(
+                color: Colors.green[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.cloud, color: Colors.teal[700], size: 36),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('本月吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                          Text('2.5 kg', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: const [
+                          Text('累積吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                          Text('12.8 kg', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              _buildEntryCard(
+                context,
+                icon: Icons.edit_note,
+                title: '日誌紀錄',
+                desc: '每日養殖狀態、照片上傳',
+                color: Colors.blue[100],
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LogPage())),
+              ),
+              const SizedBox(height: 16),
+              _buildEntryCard(
+                context,
+                icon: Icons.auto_awesome,
+                title: 'AI建議/成長曲線',
+                desc: '個人化建議、成長數據圖表',
+                color: Colors.orange[100],
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvicePage())),
+              ),
+              const SizedBox(height: 16),
+              _buildEntryCard(
+                context,
+                icon: Icons.emoji_events,
+                title: '成就/知識/社群',
+                desc: '解鎖徽章、學習知識、社群分享',
+                color: Colors.purple[100],
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementPage())),
+              ),
+              const SizedBox(height: 32),
+              const Text('今日任務：檢查水色、調整光照、拍照記錄', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 32),
+              Card(
+                color: Colors.teal[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lightbulb, color: Colors.teal[700]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(randomFact, style: const TextStyle(fontSize: 16, color: Colors.teal)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEntryCard(BuildContext context, {required IconData icon, required String title, required String desc, required Color? color, required VoidCallback onTap}) {
+    return Card(
+      color: color,
+      child: ListTile(
+        leading: Icon(icon, size: 36, color: Colors.green[700]),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        subtitle: Text(desc),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+        onTap: onTap,
+      ),
+    );
+  }
+} 
