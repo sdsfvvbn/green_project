@@ -44,4 +44,26 @@ class AlgaeLog {
       notes: map['notes'],
     );
   }
+
+  AlgaeLog copyWith({
+    int? id,
+    DateTime? date,
+    String? waterColor,
+    double? temperature,
+    double? pH,
+    int? lightHours,
+    String? photoPath,
+    String? notes,
+  }) {
+    return AlgaeLog(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      waterColor: waterColor ?? this.waterColor,
+      temperature: temperature ?? this.temperature,
+      pH: pH ?? this.pH,
+      lightHours: lightHours ?? this.lightHours,
+      photoPath: photoPath ?? this.photoPath,
+      notes: notes ?? this.notes,
+    );
+  }
 } 

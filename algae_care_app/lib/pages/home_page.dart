@@ -4,7 +4,7 @@ import '../services/database_service.dart';
 import '../models/algae_log.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'log_page.dart';
+import 'log_list_page.dart';
 import 'advice_page.dart';
 import 'achievement_page.dart';
 
@@ -16,12 +16,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final DatabaseService _databaseService = DatabaseService.instance;
+  late final DatabaseService _databaseService;
   List<AlgaeLog> _logs = [];
 
   @override
   void initState() {
     super.initState();
+    _databaseService = DatabaseService.instance;
     _loadLogs();
   }
 
@@ -112,7 +113,7 @@ class _HomePageState extends State<HomePage> {
                 title: '日誌紀錄',
                 desc: '每日養殖狀態、照片上傳',
                 color: Colors.blue[100],
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LogPage())),
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LogListPage())),
               ),
               const SizedBox(height: 16),
               _buildEntryCard(

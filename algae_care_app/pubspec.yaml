@@ -34,7 +34,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  sqflite: ^2.3.0  # 本地資料庫
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.0
   path: ^1.8.3     # 路徑處理
   shared_preferences: ^2.2.0  # 簡單數據儲存
   fl_chart: ^0.63.0  # 圖表
