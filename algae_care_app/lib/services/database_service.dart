@@ -98,4 +98,10 @@ class DatabaseService {
     }
     return null;
   }
+
+  Future<int> getLogDays() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT COUNT(DISTINCT date(date)) as cnt FROM algae_logs');
+    return result.isNotEmpty ? (result.first['cnt'] as int) : 0;
+  }
 } 

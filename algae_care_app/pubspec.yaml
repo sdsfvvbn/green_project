@@ -37,7 +37,7 @@ dependencies:
   sqflite: ^2.3.0
   sqflite_common_ffi: ^2.3.0
   path: ^1.8.3     # 路徑處理
-  shared_preferences: ^2.2.0  # 簡單數據儲存
+  shared_preferences: ^2.2.2
   fl_chart: ^0.63.0  # 圖表
   image_picker: ^1.0.4  # 照片選擇
   share_plus: ^7.1.0  # 社群分享
