@@ -35,7 +35,9 @@ class DatabaseService {
         pH REAL NOT NULL,
         lightHours INTEGER NOT NULL,
         photoPath TEXT,
-        notes TEXT
+        notes TEXT,
+        type TEXT,
+        isWaterChanged INTEGER DEFAULT 0
       )
     ''');
   }
@@ -81,5 +83,19 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<AlgaeLog?> getLogByDate(DateTime date) async {
+    final db = await database;
+    final dateStr = date.toIso8601String().split('T')[0];
+    final List<Map<String, dynamic>> maps = await db.query(
+      'algae_logs',
+      where: "date LIKE ?",
+      whereArgs: ["$dateStr%"],
+    );
+    if (maps.isNotEmpty) {
+      return AlgaeLog.fromMap(maps.first);
+    }
+    return null;
   }
 } 
