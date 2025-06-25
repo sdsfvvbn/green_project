@@ -18,9 +18,13 @@ class _LogFormPageState extends State<LogFormPage> {
   String? _waterColor;
   String? _light;
   String? _temperature;
-  String? _ph;
+  double? _phValue;
   String? _notes;
   File? _image;
+  String? _type;
+  String? _customType;
+  bool _isWaterChanged = false;
+  String? _customWaterColor;
 
   @override
   void initState() {
@@ -28,6 +32,9 @@ class _LogFormPageState extends State<LogFormPage> {
     if (widget.logId != null) {
       // TODO: 從資料庫讀取該筆日誌，並預設填入各欄位（含 notes）
     }
+    _phValue = null;
+    _type = null;
+    _isWaterChanged = false;
   }
 
   Future<void> _pickDate(BuildContext context) async {
@@ -57,7 +64,17 @@ class _LogFormPageState extends State<LogFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('日誌紀錄'), backgroundColor: Colors.blue[700]),
+      appBar: AppBar(
+        title: const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Text('日誌紀錄'),
+        ),
+        backgroundColor: Colors.blue[700],
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -69,10 +86,50 @@ class _LogFormPageState extends State<LogFormPage> {
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () => _pickDate(context),
               ),
-              TextFormField(
+              DropdownButtonFormField<String>(
+                value: _type,
+                decoration: const InputDecoration(labelText: '種類'),
+                items: const [
+                  DropdownMenuItem(value: '綠藻', child: Text('綠藻')),
+                  DropdownMenuItem(value: '小球藻', child: Text('小球藻')),
+                  DropdownMenuItem(value: '藍綠藻', child: Text('藍綠藻')),
+                  DropdownMenuItem(value: '其他', child: Text('其他')),
+                ],
+                onChanged: (val) => setState(() {
+                  _type = val;
+                  if (val != '其他') _customType = null;
+                }),
+                onSaved: (val) => _type = val,
+              ),
+              if (_type == '其他')
+                TextFormField(
+                  decoration: const InputDecoration(labelText: '請輸入種類'),
+                  onChanged: (val) => _customType = val,
+                  onSaved: (val) => _customType = val,
+                ),
+              DropdownButtonFormField<String>(
+                value: _waterColor,
                 decoration: const InputDecoration(labelText: '水色'),
+                items: const [
+                  DropdownMenuItem(value: '淡綠色', child: Text('淡綠色')),
+                  DropdownMenuItem(value: '綠色', child: Text('綠色')),
+                  DropdownMenuItem(value: '黃綠色', child: Text('黃綠色')),
+                  DropdownMenuItem(value: '黃色', child: Text('黃色')),
+                  DropdownMenuItem(value: '藍綠色', child: Text('藍綠色')),
+                  DropdownMenuItem(value: '其他', child: Text('其他')),
+                ],
+                onChanged: (val) => setState(() {
+                  _waterColor = val;
+                  if (val != '其他') _customWaterColor = null;
+                }),
                 onSaved: (val) => _waterColor = val,
               ),
+              if (_waterColor == '其他')
+                TextFormField(
+                  decoration: const InputDecoration(labelText: '請輸入水色'),
+                  onChanged: (val) => _customWaterColor = val,
+                  onSaved: (val) => _customWaterColor = val,
+                ),
               TextFormField(
                 decoration: const InputDecoration(labelText: '光照'),
                 onSaved: (val) => _light = val,
@@ -85,8 +142,22 @@ class _LogFormPageState extends State<LogFormPage> {
               TextFormField(
                 decoration: const InputDecoration(labelText: 'pH'),
                 keyboardType: TextInputType.number,
-                onSaved: (val) => _ph = val,
+                onSaved: (val) {
+                  _phValue = double.tryParse(val ?? '');
+                },
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const Text('換水:', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Checkbox(
+                    value: _isWaterChanged,
+                    onChanged: (val) => setState(() => _isWaterChanged = val ?? false),
+                  ),
+                ],
+              ),
+              
               TextFormField(
                 decoration: const InputDecoration(labelText: '微藻描述'),
                 maxLines: 2,
@@ -113,23 +184,54 @@ class _LogFormPageState extends State<LogFormPage> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     _formKey.currentState!.save();
-                    // 儲存資料到資料庫
                     final log = AlgaeLog(
                       id: widget.logId,
                       date: _selectedDate ?? DateTime.now(),
-                      waterColor: _waterColor ?? '',
+                      waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
                       temperature: double.tryParse(_temperature ?? '') ?? 0,
-                      pH: double.tryParse(_ph ?? '') ?? 0,
+                      pH: _phValue ?? 0,
                       lightHours: int.tryParse(_light ?? '') ?? 0,
                       photoPath: _image?.path,
                       notes: _notes ?? '',
+                      type: _type == '其他' ? _customType : _type,
+                      isWaterChanged: _isWaterChanged,
                     );
-                    // TODO: 判斷是新增還是編輯
-                    // await DatabaseService.instance.createLog(log);
-                    // or await DatabaseService.instance.updateLog(log);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('日誌已儲存')),
-                    );
+                    // 新增：檢查同日期是否已有日誌
+                    final existLog = await DatabaseService.instance.getLogByDate(log.date);
+                    if (existLog != null && widget.logId == null) {
+                      final shouldOverwrite = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('覆蓋提醒'),
+                          content: const Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('取消'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('覆蓋'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (shouldOverwrite == true) {
+                        await DatabaseService.instance.updateLog(log.copyWith(id: existLog.id));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('日誌已覆蓋')),
+                        );
+                      }
+                    } else {
+                      if (widget.logId == null) {
+                        await DatabaseService.instance.createLog(log);
+                      } else {
+                        await DatabaseService.instance.updateLog(log);
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('日誌已儲存')),
+                      );
+                    }
                   }
                 },
                 child: const Text('儲存'),

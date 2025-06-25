@@ -7,6 +7,8 @@ class AlgaeLog {
   final int lightHours;
   final String? photoPath;
   final String? notes;
+  final String? type;
+  final bool isWaterChanged;
 
   AlgaeLog({
     this.id,
@@ -17,6 +19,8 @@ class AlgaeLog {
     required this.lightHours,
     this.photoPath,
     this.notes,
+    this.type,
+    this.isWaterChanged = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +33,8 @@ class AlgaeLog {
       'lightHours': lightHours,
       'photoPath': photoPath,
       'notes': notes,
+      'type': type,
+      'isWaterChanged': isWaterChanged ? 1 : 0,
     };
   }
 
@@ -42,6 +48,8 @@ class AlgaeLog {
       lightHours: map['lightHours'],
       photoPath: map['photoPath'],
       notes: map['notes'],
+      type: map['type'],
+      isWaterChanged: (map['isWaterChanged'] ?? 0) == 1,
     );
   }
 
@@ -54,6 +62,8 @@ class AlgaeLog {
     int? lightHours,
     String? photoPath,
     String? notes,
+    String? type,
+    bool? isWaterChanged,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -64,6 +74,8 @@ class AlgaeLog {
       lightHours: lightHours ?? this.lightHours,
       photoPath: photoPath ?? this.photoPath,
       notes: notes ?? this.notes,
+      type: type ?? this.type,
+      isWaterChanged: isWaterChanged ?? this.isWaterChanged,
     );
   }
 } 
