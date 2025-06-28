@@ -20,8 +20,9 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -37,9 +38,17 @@ class DatabaseService {
         photoPath TEXT,
         notes TEXT,
         type TEXT,
-        isWaterChanged INTEGER DEFAULT 0
+        isWaterChanged INTEGER DEFAULT 0,
+        nextWaterChangeDate TEXT
       )
     ''');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add nextWaterChangeDate column
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN nextWaterChangeDate TEXT');
+    }
   }
 
   Future<int> createLog(AlgaeLog log) async {
@@ -103,5 +112,18 @@ class DatabaseService {
     final db = await database;
     final result = await db.rawQuery('SELECT COUNT(DISTINCT date(date)) as cnt FROM algae_logs');
     return result.isNotEmpty ? (result.first['cnt'] as int) : 0;
+  }
+
+  Future<List<AlgaeLog>> getDueWaterChanges() async {
+    final db = await database;
+    final today = DateTime.now();
+    final todayStr = today.toIso8601String().split('T')[0];
+    
+    final List<Map<String, dynamic>> maps = await db.query(
+      'algae_logs',
+      where: 'nextWaterChangeDate IS NOT NULL AND nextWaterChangeDate <= ?',
+      whereArgs: [todayStr],
+    );
+    return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
   }
 } 
