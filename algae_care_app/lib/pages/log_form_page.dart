@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
+import 'package:algae_care_app/services/notification_service.dart';
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -25,6 +26,7 @@ class _LogFormPageState extends State<LogFormPage> {
   String? _customType;
   bool _isWaterChanged = false;
   String? _customWaterColor;
+  DateTime? _nextWaterChangeDate;
 
   @override
   void initState() {
@@ -47,6 +49,20 @@ class _LogFormPageState extends State<LogFormPage> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickNextWaterChangeDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _nextWaterChangeDate ?? DateTime.now().add(const Duration(days: 7)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _nextWaterChangeDate = picked;
       });
     }
   }
@@ -153,11 +169,53 @@ class _LogFormPageState extends State<LogFormPage> {
                   const SizedBox(width: 8),
                   Checkbox(
                     value: _isWaterChanged,
-                    onChanged: (val) => setState(() => _isWaterChanged = val ?? false),
+                    onChanged: (val) async {
+                      setState(() => _isWaterChanged = val ?? false);
+                      // 當勾選換水時，自動跳出預計下次換水日期選擇
+                      if (val == true) {
+                        await _pickNextWaterChangeDate(context);
+                      } else {
+                        // 當取消勾選換水時，清除預計下次換水日期
+                        setState(() {
+                          _nextWaterChangeDate = null;
+                        });
+                      }
+                    },
                   ),
                 ],
               ),
               
+              // 顯示已選擇的預計下次換水日期
+              if (_isWaterChanged && _nextWaterChangeDate != null)
+                Container(
+                  margin: const EdgeInsets.only(left: 16, top: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.water_drop, color: Colors.blue[600], size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '預計下次換水日期: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 18),
+                        onPressed: () => _pickNextWaterChangeDate(context),
+                        tooltip: '修改日期',
+                      ),
+                    ],
+                  ),
+                ),
               TextFormField(
                 decoration: const InputDecoration(labelText: '微藻描述'),
                 maxLines: 2,
@@ -195,6 +253,7 @@ class _LogFormPageState extends State<LogFormPage> {
                       notes: _notes ?? '',
                       type: _type == '其他' ? _customType : _type,
                       isWaterChanged: _isWaterChanged,
+                      nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
                     );
                     // 新增：檢查同日期是否已有日誌
                     final existLog = await DatabaseService.instance.getLogByDate(log.date);
@@ -228,6 +287,17 @@ class _LogFormPageState extends State<LogFormPage> {
                       } else {
                         await DatabaseService.instance.updateLog(log);
                       }
+                      
+                      // 如果有設置預計下次換水日期，設置通知
+                      if (log.nextWaterChangeDate != null) {
+                        await NotificationService.instance.scheduleWaterChangeReminder(
+                          id: log.id ?? DateTime.now().millisecondsSinceEpoch,
+                          scheduledDate: log.nextWaterChangeDate!,
+                          title: '換水提醒',
+                          body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
+                        );
+                      }
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('日誌已儲存')),
                       );

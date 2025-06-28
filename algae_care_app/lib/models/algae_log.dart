@@ -9,6 +9,7 @@ class AlgaeLog {
   final String? notes;
   final String? type;
   final bool isWaterChanged;
+  final DateTime? nextWaterChangeDate;
 
   AlgaeLog({
     this.id,
@@ -21,6 +22,7 @@ class AlgaeLog {
     this.notes,
     this.type,
     this.isWaterChanged = false,
+    this.nextWaterChangeDate,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +37,7 @@ class AlgaeLog {
       'notes': notes,
       'type': type,
       'isWaterChanged': isWaterChanged ? 1 : 0,
+      'nextWaterChangeDate': nextWaterChangeDate?.toIso8601String(),
     };
   }
 
@@ -50,6 +53,7 @@ class AlgaeLog {
       notes: map['notes'],
       type: map['type'],
       isWaterChanged: (map['isWaterChanged'] ?? 0) == 1,
+      nextWaterChangeDate: map['nextWaterChangeDate'] != null ? DateTime.parse(map['nextWaterChangeDate']) : null,
     );
   }
 
@@ -64,6 +68,7 @@ class AlgaeLog {
     String? notes,
     String? type,
     bool? isWaterChanged,
+    DateTime? nextWaterChangeDate,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -76,6 +81,7 @@ class AlgaeLog {
       notes: notes ?? this.notes,
       type: type ?? this.type,
       isWaterChanged: isWaterChanged ?? this.isWaterChanged,
+      nextWaterChangeDate: nextWaterChangeDate ?? this.nextWaterChangeDate,
     );
   }
 } 
