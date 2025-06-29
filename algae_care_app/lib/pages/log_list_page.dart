@@ -27,6 +27,8 @@ class _LogListPageState extends State<LogListPage> {
       lightHours: 8,
       photoPath: null,
       notes: '測試日誌',
+      isWaterChanged: true,
+      nextWaterChangeDate: DateTime.now().add(const Duration(days: 6)), // 預計6天後換水
     ),
     AlgaeLog(
       id: 2,
@@ -48,6 +50,8 @@ class _LogListPageState extends State<LogListPage> {
       lightHours: 9,
       photoPath: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
       notes: '這是五月的測試日誌，有照片',
+      isWaterChanged: true,
+      nextWaterChangeDate: DateTime(2025, 5, 22), // 預計一週後換水
     ),
   ];
 
@@ -57,13 +61,22 @@ class _LogListPageState extends State<LogListPage> {
   bool _showCalendar = false;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  late PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: 0);
     if (!kIsWeb) {
       _refreshLogs();
     }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   void _refreshLogs() {
@@ -178,9 +191,19 @@ class _LogListPageState extends State<LogListPage> {
               ),
             );
           } else {
-            return _showCalendar
-                ? _buildCalendar(snapshot.data!)
-                : _buildGroupedList(snapshot.data!);
+            final logs = snapshot.data!;
+            return PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              children: [
+                _buildGroupedList(logs),
+                _buildCalendar(logs),
+              ],
+            );
           }
         },
       ),
@@ -291,7 +314,9 @@ class _LogListPageState extends State<LogListPage> {
                               height: 60,
                               child: log.photoPath!.startsWith('http')
                                   ? Image.network(log.photoPath!, fit: BoxFit.cover)
-                                  : Image.file(File(log.photoPath!), fit: BoxFit.cover),
+                                  : kIsWeb
+                                      ? Icon(Icons.image, size: 48, color: Colors.grey)
+                                      : Image.file(File(log.photoPath!), fit: BoxFit.cover),
                             ),
                           ),
                       ],
@@ -309,64 +334,119 @@ class _LogListPageState extends State<LogListPage> {
   Widget _buildCalendar(List<AlgaeLog> logs) {
     // 依日期分組
     final Map<DateTime, List<AlgaeLog>> logMap = {};
+    final Map<DateTime, List<AlgaeLog>> scheduledWaterChanges = {};
+    
     for (final log in logs) {
       final key = DateTime(log.date.year, log.date.month, log.date.day);
       logMap.putIfAbsent(key, () => []).add(log);
+      
+      // 收集預計換水日期
+      if (log.nextWaterChangeDate != null) {
+        final scheduledKey = DateTime(
+          log.nextWaterChangeDate!.year, 
+          log.nextWaterChangeDate!.month, 
+          log.nextWaterChangeDate!.day
+        );
+        scheduledWaterChanges.putIfAbsent(scheduledKey, () => []).add(log);
+      }
     }
+    
     return TableCalendar<AlgaeLog>(
       firstDay: DateTime(2020, 1, 1),
       lastDay: DateTime(2100, 12, 31),
       focusedDay: _focusedDay,
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
       eventLoader: (day) => logMap[DateTime(day.year, day.month, day.day)] ?? [],
+      availableCalendarFormats: const {
+        CalendarFormat.month: '月',
+      },
       onDaySelected: (selected, focused) {
         setState(() {
           _selectedDay = selected;
           _focusedDay = focused;
         });
         final logsForDay = logMap[DateTime(selected.year, selected.month, selected.day)] ?? [];
-        if (logsForDay.isNotEmpty) {
+        final scheduledForDay = scheduledWaterChanges[DateTime(selected.year, selected.month, selected.day)] ?? [];
+        
+        if (logsForDay.isNotEmpty || scheduledForDay.isNotEmpty) {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: Text('${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')} 日誌'),
+              title: Text('${selected.year}-${selected.month.toString().padLeft(2, '0')}-${selected.day.toString().padLeft(2, '0')}'),
               content: SizedBox(
                 width: 320,
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: logsForDay.map((log) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (log.photoPath != null && log.photoPath!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: log.photoPath!.startsWith('http')
-                                ? Image.network(log.photoPath!, height: 120)
-                                : Image.file(File(log.photoPath!), height: 120),
-                            ),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                    children: [
+                      if (logsForDay.isNotEmpty) ...[
+                        const Text('日誌記錄:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        ...logsForDay.map((log) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Chip(label: Text('水色: ${log.waterColor}')),
-                              Chip(label: Text('種類: ${log.type ?? ''}')),
-                              if (log.isWaterChanged) Chip(label: const Text('換水'), backgroundColor: Colors.blue[100]),
-                              Chip(label: Text('pH: ${log.pH}')),
-                              Chip(label: Text('溫度: ${log.temperature}°C')),
-                              Chip(label: Text('光照: ${log.lightHours}')),
+                              if (log.photoPath != null && log.photoPath!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: log.photoPath!.startsWith('http')
+                                    ? Image.network(log.photoPath!, height: 120)
+                                    : kIsWeb
+                                        ? Icon(Icons.image, size: 80, color: Colors.grey)
+                                        : Image.file(File(log.photoPath!), height: 120),
+                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Chip(label: Text('水色: ${log.waterColor}')),
+                                  Chip(label: Text('種類: ${log.type ?? ''}')),
+                                  if (log.isWaterChanged) Chip(label: const Text('換水'), backgroundColor: Colors.blue[100]),
+                                  Chip(label: Text('pH: ${log.pH}')),
+                                  Chip(label: Text('溫度: ${log.temperature}°C')),
+                                  Chip(label: Text('光照: ${log.lightHours}')),
+                                ],
+                              ),
+                              if (log.notes != null && log.notes!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text('描述：${log.notes!}', style: const TextStyle(color: Colors.grey)),
+                                ),
                             ],
                           ),
-                          if (log.notes != null && log.notes!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text('描述：${log.notes!}', style: const TextStyle(color: Colors.grey)),
-                            ),
-                        ],
-                      ),
-                    )).toList(),
+                        )).toList(),
+                      ],
+                      if (scheduledForDay.isNotEmpty) ...[
+                        if (logsForDay.isNotEmpty) const SizedBox(height: 16),
+                        const Text('預計換水:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                        const SizedBox(height: 8),
+                        ...scheduledForDay.map((log) => Container(
+                          padding: const EdgeInsets.all(8),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange[200]!),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.schedule, color: Colors.orange[600], size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '預計換水日期',
+                                  style: TextStyle(
+                                    color: Colors.orange[700],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )).toList(),
+                      ],
+                    ],
                   ),
                 ),
               ),
@@ -383,13 +463,16 @@ class _LogListPageState extends State<LogListPage> {
       calendarBuilders: CalendarBuilders(
         defaultBuilder: (context, day, focusedDay) {
           final logsForDay = logMap[DateTime(day.year, day.month, day.day)] ?? [];
+          final scheduledForDay = scheduledWaterChanges[DateTime(day.year, day.month, day.day)] ?? [];
           final hasLog = logsForDay.isNotEmpty;
           final hasWaterChange = hasLog && logsForDay.any((log) => log.isWaterChanged);
+          final hasScheduledWaterChange = scheduledForDay.isNotEmpty;
+          
           return Stack(
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: hasLog ? Colors.green[100] : null,
+                  color: hasLog ? Colors.green[100] : (hasScheduledWaterChange ? Colors.orange[50] : null),
                   borderRadius: BorderRadius.zero,
                 ),
                 width: double.infinity,
@@ -398,7 +481,7 @@ class _LogListPageState extends State<LogListPage> {
                   child: Text(
                     day.day.toString(),
                     style: TextStyle(
-                      color: hasLog ? Colors.green[900] : Colors.grey[600],
+                      color: hasLog ? Colors.green[900] : (hasScheduledWaterChange ? Colors.orange[700] : Colors.grey[600]),
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -406,23 +489,40 @@ class _LogListPageState extends State<LogListPage> {
                 ),
               ),
               if (hasWaterChange)
+                Positioned.fill(
+                  child: Center(
+                    child: Icon(
+                      Icons.water_drop, 
+                      color: Colors.blue.withOpacity(0.4), 
+                      size: 28,
+                    ),
+                  ),
+                ),
+              if (hasScheduledWaterChange && !hasWaterChange)
                 Positioned(
                   right: 2,
-                  bottom: 2,
-                  child: Icon(Icons.water_drop, color: Colors.blue, size: 14),
+                  top: 2,
+                  child: Icon(
+                    Icons.schedule, 
+                    color: Colors.orange[600], 
+                    size: 12,
+                  ),
                 ),
             ],
           );
         },
         todayBuilder: (context, day, focusedDay) {
           final logsForDay = logMap[DateTime(day.year, day.month, day.day)] ?? [];
+          final scheduledForDay = scheduledWaterChanges[DateTime(day.year, day.month, day.day)] ?? [];
           final hasLog = logsForDay.isNotEmpty;
           final hasWaterChange = hasLog && logsForDay.any((log) => log.isWaterChanged);
+          final hasScheduledWaterChange = scheduledForDay.isNotEmpty;
+          
           return Stack(
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: hasLog ? Colors.green[100] : Colors.orange[50],
+                  color: hasLog ? Colors.green[100] : (hasScheduledWaterChange ? Colors.orange[50] : Colors.orange[50]),
                   borderRadius: BorderRadius.zero,
                 ),
                 width: double.infinity,
@@ -431,7 +531,7 @@ class _LogListPageState extends State<LogListPage> {
                   child: Text(
                     day.day.toString(),
                     style: TextStyle(
-                      color: hasLog ? Colors.green[900] : Colors.orange,
+                      color: hasLog ? Colors.green[900] : (hasScheduledWaterChange ? Colors.orange[700] : Colors.orange),
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -439,10 +539,24 @@ class _LogListPageState extends State<LogListPage> {
                 ),
               ),
               if (hasWaterChange)
+                Positioned.fill(
+                  child: Center(
+                    child: Icon(
+                      Icons.water_drop, 
+                      color: Colors.blue.withOpacity(0.4), 
+                      size: 28,
+                    ),
+                  ),
+                ),
+              if (hasScheduledWaterChange && !hasWaterChange)
                 Positioned(
                   right: 2,
-                  bottom: 2,
-                  child: Icon(Icons.water_drop, color: Colors.blue, size: 14),
+                  top: 2,
+                  child: Icon(
+                    Icons.schedule, 
+                    color: Colors.orange[600], 
+                    size: 12,
+                  ),
                 ),
             ],
           );
@@ -488,6 +602,7 @@ class _MockLogFormState extends State<_MockLogForm> {
   bool _isWaterChanged = false;
   String? _customType;
   String? _customWaterColor;
+  DateTime? _nextWaterChangeDate;
 
   @override
   void initState() {
@@ -502,6 +617,7 @@ class _MockLogFormState extends State<_MockLogForm> {
     _photoDataUrl = log?.photoPath;
     _type = log?.type;
     _isWaterChanged = log?.isWaterChanged ?? false;
+    _nextWaterChangeDate = log?.nextWaterChangeDate;
   }
 
   Future<void> _pickWebImage() async {
@@ -638,10 +754,75 @@ class _MockLogFormState extends State<_MockLogForm> {
                     const SizedBox(width: 8),
                     Checkbox(
                       value: _isWaterChanged,
-                      onChanged: (val) => setState(() => _isWaterChanged = val ?? false),
+                      onChanged: (val) async {
+                        setState(() => _isWaterChanged = val ?? false);
+                        // 當勾選換水時，自動跳出預計下次換水日期選擇
+                        if (val == true) {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _nextWaterChangeDate ?? DateTime.now().add(const Duration(days: 7)),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              _nextWaterChangeDate = picked;
+                            });
+                          }
+                        } else {
+                          // 當取消勾選換水時，清除預計下次換水日期
+                          setState(() {
+                            _nextWaterChangeDate = null;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
+                
+                // 顯示已選擇的預計下次換水日期
+                if (_isWaterChanged && _nextWaterChangeDate != null)
+                  Container(
+                    margin: const EdgeInsets.only(left: 16, top: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.water_drop, color: Colors.blue[600], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '預計下次換水日期: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 18),
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _nextWaterChangeDate!,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _nextWaterChangeDate = picked;
+                              });
+                            }
+                          },
+                          tooltip: '修改日期',
+                        ),
+                      ],
+                    ),
+                  ),
                 TextFormField(
                   initialValue: _notes,
                   decoration: const InputDecoration(labelText: '微藻描述'),
@@ -690,6 +871,7 @@ class _MockLogFormState extends State<_MockLogForm> {
                 notes: _notes,
                 type: _type == '其他' ? _customType : _type,
                 isWaterChanged: _isWaterChanged,
+                nextWaterChangeDate: _nextWaterChangeDate,
               ),
             );
           },

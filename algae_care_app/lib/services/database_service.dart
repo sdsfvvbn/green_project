@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/algae_log.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -20,8 +21,9 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -37,9 +39,17 @@ class DatabaseService {
         photoPath TEXT,
         notes TEXT,
         type TEXT,
-        isWaterChanged INTEGER DEFAULT 0
+        isWaterChanged INTEGER DEFAULT 0,
+        nextWaterChangeDate TEXT
       )
     ''');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add nextWaterChangeDate column
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN nextWaterChangeDate TEXT');
+    }
   }
 
   Future<int> createLog(AlgaeLog log) async {
@@ -48,6 +58,10 @@ class DatabaseService {
   }
 
   Future<List<AlgaeLog>> getAllLogs() async {
+    if (kIsWeb) {
+      // Web 端回傳空資料或假資料
+      return [];
+    }
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('algae_logs');
     return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
@@ -100,8 +114,24 @@ class DatabaseService {
   }
 
   Future<int> getLogDays() async {
+    if (kIsWeb) {
+      return 0;
+    }
     final db = await database;
     final result = await db.rawQuery('SELECT COUNT(DISTINCT date(date)) as cnt FROM algae_logs');
     return result.isNotEmpty ? (result.first['cnt'] as int) : 0;
+  }
+
+  Future<List<AlgaeLog>> getDueWaterChanges() async {
+    final db = await database;
+    final today = DateTime.now();
+    final todayStr = today.toIso8601String().split('T')[0];
+    
+    final List<Map<String, dynamic>> maps = await db.query(
+      'algae_logs',
+      where: 'nextWaterChangeDate IS NOT NULL AND nextWaterChangeDate <= ?',
+      whereArgs: [todayStr],
+    );
+    return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
   }
 } 
