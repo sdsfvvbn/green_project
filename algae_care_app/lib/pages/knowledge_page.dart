@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'quiz_game_page.dart';
 
 class KnowledgePage extends StatefulWidget {
   const KnowledgePage({super.key});
@@ -50,12 +51,36 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
   ];
   late Map<String, dynamic> _quiz;
 
+  final List<Map<String, dynamic>> dailyQuestions = [
+    {
+      'question': '微藻大量吸收CO₂，減緩暖化。',
+    },
+    {
+      'question': '螺旋藻是最常見的可食用微藻之一。',
+    },
+    {
+      'question': '微藻可用於生產生質燃料與天然色素。',
+    },
+    {
+      'question': '微藻能淨化水質，是天然的水體清道夫。',
+    },
+    {
+      'question': '微藻含有豐富蛋白質與維生素，是超級食物。',
+    },
+    {
+      'question': '微藻養殖有助於減緩全球暖化。',
+    },
+  ];
+  late String _todayQuestion;
+
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _scaleAnim = Tween<double>(begin: 1.0, end: 1.2).chain(CurveTween(curve: Curves.elasticOut)).animate(_animController);
     _randomQuiz();
+    dailyQuestions.shuffle();
+    _todayQuestion = dailyQuestions.first['question']!;
   }
 
   void _randomQuiz() {
@@ -65,6 +90,13 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
     _quizCorrect = false;
     _selectedIndex = null;
     setState(() {});
+  }
+
+  void _changeDailyQuestion() {
+    setState(() {
+      dailyQuestions.shuffle();
+      _todayQuestion = dailyQuestions.first['question']!;
+    });
   }
 
   @override
@@ -78,45 +110,93 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
     final knowledgeList = [
       {
         'title': '微藻是什麼？',
-        'content': '微藻是一種單細胞水生生物，能進行光合作用，吸收二氧化碳並釋放氧氣，是地球重要的碳吸收者。',
+        'content': '微藻是一種單細胞水生生物，能進行光合作用，吸收二氧化碳並釋放氧氣，是地球重要的碳吸收者。微藻種類繁多，能適應淡水、海水甚至極端環境。',
         'icon': Icons.grass,
         'color': Colors.green[100]
       },
       {
         'title': '微藻的健康益處',
-        'content': '微藻富含蛋白質、維生素、礦物質，是超級食物，有助免疫力與新陳代謝。',
+        'content': '微藻富含蛋白質、維生素B群、礦物質、葉綠素與Omega-3脂肪酸，是超級食物，有助免疫力、抗氧化、促進新陳代謝。螺旋藻、小球藻等常見微藻已被廣泛應用於保健食品。',
         'icon': Icons.health_and_safety,
         'color': Colors.teal[50]
       },
       {
-        'title': '微藻養殖步驟',
-        'content': '1. 準備乾淨容器與水源\n2. 加入微藻種子與營養液\n3. 提供適當光照與溫度\n4. 定期換水、測pH與溫度\n5. 記錄成長狀態、拍照觀察',
-        'icon': Icons.science,
-        'color': Colors.blue[50]
-      },
-      {
         'title': '微藻的環保意義',
-        'content': '微藻能大量吸收CO₂，減緩全球暖化。每1公升微藻養殖液一年可吸收約2g二氧化碳。',
+        'content': '微藻能大量吸收CO₂，減緩全球暖化。每1公升微藻養殖液一年可吸收約2g二氧化碳。微藻還能淨化廢水，吸收水中多餘的氮、磷，是天然的水體清道夫。',
         'icon': Icons.eco,
         'color': Colors.teal[100]
       },
       {
         'title': '微藻的應用',
-        'content': '微藻可用於健康食品、動物飼料、化妝品、甚至生質燃料。常見DIY如微藻果凍、微藻餅乾。',
+        'content': '微藻可用於健康食品、動物飼料、化妝品、甚至生質燃料。常見DIY如微藻果凍、微藻餅乾。微藻萃取物也常被用於高級化妝品與保養品。',
         'icon': Icons.restaurant,
         'color': Colors.orange[50]
       },
       {
+        'title': '微藻產業新趨勢',
+        'content': '微藻被視為未來綠色產業新星，可用於生產生質柴油、環保塑膠、天然色素。微藻的高生長速率與碳吸收能力，讓其成為永續發展的重要角色。',
+        'icon': Icons.trending_up,
+        'color': Colors.lightGreen[50]
+      },
+      {
+        'title': '微藻與健康生活',
+        'content': '多吃微藻製品（如螺旋藻粉、小球藻錠）有助補充營養、促進腸道健康。微藻中的葉綠素有助於身體排毒，Omega-3脂肪酸則有益心血管。',
+        'icon': Icons.favorite,
+        'color': Colors.pink[50]
+      },
+      {
+        'title': '微藻養殖步驟',
+        'content': '1. 準備乾淨容器與水源\n2. 加入微藻種子與營養液\n3. 提供適當光照與溫度\n4. 定期換水、測pH與溫度\n5. 記錄成長狀態、拍照觀察。',
+        'icon': Icons.science,
+        'color': Colors.blue[50]
+      },
+      {
         'title': '趣味冷知識',
-        'content': '有些微藻能發光（夜光藻）、有些可做成天然顏料，甚至能當生物燃料！',
+        'content': '有些微藻能發光（夜光藻），在夜晚海邊會出現「藍眼淚」奇景。微藻的顏色多變，從綠色、紅色到金黃色都有。微藻的祖先可能是地球最早的多細胞生物。',
         'icon': Icons.lightbulb,
         'color': Colors.yellow[50]
+      },
+      {
+        'title': '微藻與地球氧氣',
+        'content': '微藻是地球氧氣的重要來源，貢獻全球約50%的氧氣。沒有微藻，地球生態將大受影響。',
+        'icon': Icons.public,
+        'color': Colors.cyan[50]
+      },
+      {
+        'title': '微藻與永續發展',
+        'content': '微藻可用於碳捕捉、廢水處理、資源循環，是實現永續發展目標（SDGs）的重要工具。',
+        'icon': Icons.recycling,
+        'color': Colors.green[50]
+      },
+      {
+        'title': '微藻的營養成分',
+        'content': '螺旋藻蛋白質含量高達60-70%，小球藻富含葉綠素與維生素B12。微藻還含有多種礦物質與抗氧化物質。',
+        'icon': Icons.emoji_food_beverage,
+        'color': Colors.lime[50]
+      },
+      {
+        'title': '微藻的趣味應用',
+        'content': '微藻可做成冰淇淋、麵包、飲料，甚至用於3D列印食品。微藻顏料可用於天然染色。',
+        'icon': Icons.icecream,
+        'color': Colors.indigo[50]
       },
       {
         'title': '常見問題Q&A',
         'content': 'Q: 水變綠怎麼辦？\nA: 代表微藻生長旺盛，適度換水即可。\n\nQ: 泡泡太多怎麼處理？\nA: 可減少攪拌或換水。\n\nQ: 微藻死掉怎麼救？\nA: 檢查水質、pH、溫度，適度換水並補充營養。',
         'icon': Icons.question_answer,
         'color': Colors.purple[50]
+      },
+      {
+        'title': '微藻與氣候變遷',
+        'content': '微藻能吸收大量CO₂，是對抗氣候變遷的天然幫手。推廣微藻養殖有助於減緩全球暖化。',
+        'icon': Icons.cloud,
+        'color': Colors.blueGrey[50]
+      },
+      {
+        'title': '環保生活小知識',
+        'content': '減少一次性塑膠、節能減碳、多吃植物性食物、步行或騎腳踏車上下班，都是簡單的環保行動。',
+        'icon': Icons.directions_bike,
+        'color': Colors.lightBlue[50]
       },
       {
         'title': '挑戰任務',
@@ -127,130 +207,49 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
     ];
     return Scaffold(
       appBar: AppBar(title: const Text('微藻知識小學堂'), backgroundColor: Colors.green[700]),
-      body: ListView.separated(
-        itemCount: knowledgeList.length + 1,
-        separatorBuilder: (context, i) => const Divider(),
-        itemBuilder: (context, i) {
-          if (i < knowledgeList.length) {
-            final k = knowledgeList[i];
-            return Card(
-              color: k['color'] as Color?,
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: ListTile(
-                leading: Icon(k['icon'] as IconData, color: Colors.green[800], size: 32),
-                title: Text(k['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(k['content'] as String),
-              ),
-            );
-          } else {
-            // Q&A互動區塊
-            return Padding(
+      body: Column(
+        children: [
+          Card(
+            color: Colors.teal[50],
+            margin: const EdgeInsets.all(16),
+            child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Card(
-                color: Colors.teal[50],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: const [
-                          Icon(Icons.quiz, color: Colors.teal, size: 28),
-                          SizedBox(width: 8),
-                          Text('每日一題', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(_quiz['question'], style: const TextStyle(fontSize: 16)),
-                      const SizedBox(height: 12),
-                      ...List.generate(_quiz['options'].length, (idx) {
-                        final option = _quiz['options'][idx];
-                        final isSelected = _selectedIndex == idx;
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2.0),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isSelected ? Colors.teal[300] : Colors.teal[100],
-                              foregroundColor: Colors.black,
-                            ),
-                            onPressed: _quizAnswered
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _selectedIndex = idx;
-                                      _quizAnswered = true;
-                                      _quizCorrect = idx == _quiz['answer'];
-                                      if (_quizCorrect) _animController.forward(from: 0);
-                                    });
-                                  },
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(option),
-                            ),
-                          ),
-                        );
-                      }),
-                      if (_quizAnswered)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16.0),
-                          child: Row(
-                            children: [
-                              _quizCorrect
-                                  ? ScaleTransition(
-                                      scale: _scaleAnim,
-                                      child: const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
-                                    )
-                                  : const Icon(Icons.close, color: Colors.red, size: 32),
-                              const SizedBox(width: 8),
-                              Text(
-                                _quizCorrect ? '恭喜答對，解鎖Q&A達人成就！' : '答錯囉，再試一次！',
-                                style: TextStyle(
-                                  color: _quizCorrect ? Colors.teal[800] : Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (_quizAnswered)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(_quiz['explain'], style: const TextStyle(color: Colors.teal)),
-                        ),
-                      if (_quizAnswered && !_quizCorrect)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _quizAnswered = false;
-                                _selectedIndex = null;
-                              });
-                            },
-                            child: const Text('再試一次'),
-                          ),
-                        ),
-                      if (_quizAnswered && _quizCorrect)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('換一題'),
-                            onPressed: () {
-                              _randomQuiz();
-                            },
-                          ),
-                        ),
-                    ],
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb, color: Colors.teal[700]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(_todayQuestion, style: const TextStyle(fontSize: 16, color: Colors.teal)),
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(Icons.refresh, color: Colors.green),
+                    onPressed: _changeDailyQuestion,
+                    tooltip: '換一題',
+                  ),
+                ],
               ),
-            );
-          }
-        },
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              itemCount: knowledgeList.length,
+              separatorBuilder: (context, i) => const Divider(),
+              itemBuilder: (context, i) {
+                final k = knowledgeList[i];
+                return Card(
+                  color: k['color'] as Color?,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: ListTile(
+                    leading: Icon(k['icon'] as IconData, color: Colors.green[800], size: 32),
+                    title: Text(k['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(k['content'] as String),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

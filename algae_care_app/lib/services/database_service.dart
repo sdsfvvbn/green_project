@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/algae_log.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -57,6 +58,10 @@ class DatabaseService {
   }
 
   Future<List<AlgaeLog>> getAllLogs() async {
+    if (kIsWeb) {
+      // Web 端回傳空資料或假資料
+      return [];
+    }
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('algae_logs');
     return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
@@ -109,6 +114,9 @@ class DatabaseService {
   }
 
   Future<int> getLogDays() async {
+    if (kIsWeb) {
+      return 0;
+    }
     final db = await database;
     final result = await db.rawQuery('SELECT COUNT(DISTINCT date(date)) as cnt FROM algae_logs');
     return result.isNotEmpty ? (result.first['cnt'] as int) : 0;

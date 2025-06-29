@@ -314,7 +314,9 @@ class _LogListPageState extends State<LogListPage> {
                               height: 60,
                               child: log.photoPath!.startsWith('http')
                                   ? Image.network(log.photoPath!, fit: BoxFit.cover)
-                                  : Image.file(File(log.photoPath!), fit: BoxFit.cover),
+                                  : kIsWeb
+                                      ? Icon(Icons.image, size: 48, color: Colors.grey)
+                                      : Image.file(File(log.photoPath!), fit: BoxFit.cover),
                             ),
                           ),
                       ],
@@ -390,7 +392,9 @@ class _LogListPageState extends State<LogListPage> {
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: log.photoPath!.startsWith('http')
                                     ? Image.network(log.photoPath!, height: 120)
-                                    : Image.file(File(log.photoPath!), height: 120),
+                                    : kIsWeb
+                                        ? Icon(Icons.image, size: 80, color: Colors.grey)
+                                        : Image.file(File(log.photoPath!), height: 120),
                                 ),
                               Wrap(
                                 spacing: 8,
