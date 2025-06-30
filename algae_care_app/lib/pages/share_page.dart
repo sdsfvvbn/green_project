@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:algae_care_app/services/database_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SharePage extends StatefulWidget {
   const SharePage({super.key});
@@ -149,10 +150,12 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                       children: [
                         _imageFile == null
                             ? Icon(Icons.emoji_nature, color: Colors.green[700], size: 64)
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.file(_imageFile!, width: 140, height: 140, fit: BoxFit.cover),
-                              ),
+                            : kIsWeb
+                                ? Icon(Icons.image, size: 64, color: Colors.grey)
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.file(_imageFile!, width: 140, height: 140, fit: BoxFit.cover),
+                                  ),
                         const SizedBox(height: 8),
                         ElevatedButton.icon(
                           icon: const Icon(Icons.add_a_photo, color: Colors.white),

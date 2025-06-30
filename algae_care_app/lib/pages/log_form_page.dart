@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
+import 'package:algae_care_app/services/notification_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -25,6 +27,9 @@ class _LogFormPageState extends State<LogFormPage> {
   String? _customType;
   bool _isWaterChanged = false;
   String? _customWaterColor;
+  DateTime? _nextWaterChangeDate;
+  List<File> _images = []; // 新增：多圖
+  List<String> _actions = []; // 新增：多種操作標記
 
   @override
   void initState() {
@@ -51,12 +56,26 @@ class _LogFormPageState extends State<LogFormPage> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  Future<void> _pickNextWaterChangeDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _nextWaterChangeDate ?? DateTime.now().add(const Duration(days: 7)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        _nextWaterChangeDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+    final pickedFiles = await picker.pickMultiImage();
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      setState(() {
+        _images = pickedFiles.map((f) => File(f.path)).toList();
       });
     }
   }
@@ -153,32 +172,84 @@ class _LogFormPageState extends State<LogFormPage> {
                   const SizedBox(width: 8),
                   Checkbox(
                     value: _isWaterChanged,
-                    onChanged: (val) => setState(() => _isWaterChanged = val ?? false),
+                    onChanged: (val) async {
+                      setState(() => _isWaterChanged = val ?? false);
+                      // 當勾選換水時，自動跳出預計下次換水日期選擇
+                      if (val == true) {
+                        await _pickNextWaterChangeDate(context);
+                      } else {
+                        // 當取消勾選換水時，清除預計下次換水日期
+                        setState(() {
+                          _nextWaterChangeDate = null;
+                        });
+                      }
+                    },
                   ),
                 ],
               ),
               
+              // 顯示已選擇的預計下次換水日期
+              if (_isWaterChanged && _nextWaterChangeDate != null)
+                Container(
+                  margin: const EdgeInsets.only(left: 16, top: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.water_drop, color: Colors.blue[600], size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '預計下次換水日期: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 18),
+                        onPressed: () => _pickNextWaterChangeDate(context),
+                        tooltip: '修改日期',
+                      ),
+                    ],
+                  ),
+                ),
               TextFormField(
                 decoration: const InputDecoration(labelText: '微藻描述'),
                 maxLines: 2,
                 onSaved: (val) => _notes = val,
               ),
               const SizedBox(height: 16),
-              _image == null
-                  ? TextButton.icon(
-                      icon: const Icon(Icons.photo_camera),
-                      label: const Text('上傳照片'),
-                      onPressed: _pickImage,
-                    )
-                  : Column(
-                      children: [
-                        Image.file(_image!, height: 150),
-                        TextButton(
-                          onPressed: _pickImage,
-                          child: const Text('更換照片'),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('選擇照片'),
+                    onPressed: _pickImages,
+                  ),
+                  const SizedBox(width: 8),
+                  if (_images.isNotEmpty)
+                    Expanded(
+                      child: SizedBox(
+                        height: 60,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: _images.map((img) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: kIsWeb
+                              ? Icon(Icons.image, size: 48, color: Colors.grey)
+                              : Image.file(img, width: 60, height: 60, fit: BoxFit.cover),
+                          )).toList(),
                         ),
-                      ],
+                      ),
                     ),
+                ],
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
@@ -195,6 +266,7 @@ class _LogFormPageState extends State<LogFormPage> {
                       notes: _notes ?? '',
                       type: _type == '其他' ? _customType : _type,
                       isWaterChanged: _isWaterChanged,
+                      nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
                     );
                     // 新增：檢查同日期是否已有日誌
                     final existLog = await DatabaseService.instance.getLogByDate(log.date);
@@ -228,6 +300,17 @@ class _LogFormPageState extends State<LogFormPage> {
                       } else {
                         await DatabaseService.instance.updateLog(log);
                       }
+                      
+                      // 如果有設置預計下次換水日期，設置通知
+                      if (log.nextWaterChangeDate != null) {
+                        await NotificationService.instance.scheduleWaterChangeReminder(
+                          id: log.id ?? DateTime.now().millisecondsSinceEpoch,
+                          scheduledDate: log.nextWaterChangeDate!,
+                          title: '換水提醒',
+                          body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
+                        );
+                      }
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('日誌已儲存')),
                       );
@@ -235,6 +318,33 @@ class _LogFormPageState extends State<LogFormPage> {
                   }
                 },
                 child: const Text('儲存'),
+              ),
+              const SizedBox(height: 16),
+              // 操作標記多選
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilterChip(
+                    label: const Text('換水'),
+                    selected: _actions.contains('換水'),
+                    onSelected: (v) => setState(() => v ? _actions.add('換水') : _actions.remove('換水')),
+                  ),
+                  FilterChip(
+                    label: const Text('加光'),
+                    selected: _actions.contains('加光'),
+                    onSelected: (v) => setState(() => v ? _actions.add('加光') : _actions.remove('加光')),
+                  ),
+                  FilterChip(
+                    label: const Text('加肥'),
+                    selected: _actions.contains('加肥'),
+                    onSelected: (v) => setState(() => v ? _actions.add('加肥') : _actions.remove('加肥')),
+                  ),
+                  FilterChip(
+                    label: const Text('其他'),
+                    selected: _actions.contains('其他'),
+                    onSelected: (v) => setState(() => v ? _actions.add('其他') : _actions.remove('其他')),
+                  ),
+                ],
               ),
             ],
           ),

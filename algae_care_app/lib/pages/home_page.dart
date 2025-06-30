@@ -12,6 +12,8 @@ import 'share_page.dart';
 import 'algae_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'carbon_chart_widget.dart';
+import 'share_wall_page.dart';
+import 'quiz_game_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,6 +29,16 @@ class _HomePageState extends State<HomePage> {
   int _logDays = 1;
   double get _monthCO2 => _algaeVolume * 2 / 12;
   double get _totalCO2 => _algaeVolume * 2 * _logDays / 365;
+  final List<String> facts = [
+    '微藻一年可吸收自身重量10倍的二氧化碳。',
+    '螺旋藻是最常見的可食用微藻之一。',
+    '微藻可用於生產生質燃料與天然色素。',
+    '1公升微藻養殖液一年可吸收約2g二氧化碳。',
+    '微藻能淨化水質，是天然的水體清道夫。',
+    '微藻含有豐富蛋白質與維生素，是超級食物。',
+    '微藻養殖有助於減緩全球暖化。',
+  ];
+  late String _currentFact;
 
   Future<void> _loadAlgaeSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -46,6 +58,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _currentFact = (facts..shuffle()).first;
     _databaseService = DatabaseService.instance;
     _loadLogs();
     _loadAlgaeSettings();
@@ -59,19 +72,15 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _changeFact() {
+    setState(() {
+      facts.shuffle();
+      _currentFact = facts.first;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<String> facts = [
-      '微藻一年可吸收自身重量10倍的二氧化碳。',
-      '螺旋藻是最常見的可食用微藻之一。',
-      '微藻可用於生產生質燃料與天然色素。',
-      '1公升微藻養殖液一年可吸收約2g二氧化碳。',
-      '微藻能淨化水質，是天然的水體清道夫。',
-      '微藻含有豐富蛋白質與維生素，是超級食物。',
-      '微藻養殖有助於減緩全球暖化。',
-    ];
-    final randomFact = (facts..shuffle()).first;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('個人化微藻養殖APP'),
@@ -95,13 +104,12 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: SizedBox(
-                  height: 80,
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Icon(Icons.eco, color: Colors.green[700], size: 64),
-                  ),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Icon(Icons.eco, color: Colors.green[700], size: 64),
                 ),
               ),
               const SizedBox(height: 12),
@@ -168,8 +176,7 @@ class _HomePageState extends State<HomePage> {
               _buildEntryCard(
                 context,
                 icon: Icons.edit_note,
-                title: '日誌紀錄',
-                desc: '每日養殖狀態、照片上傳',
+                title: '日誌記錄',
                 color: Colors.blue[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LogListPage())),
               ),
@@ -178,7 +185,6 @@ class _HomePageState extends State<HomePage> {
                 context,
                 icon: Icons.auto_awesome,
                 title: 'AI建議/成長曲線',
-                desc: '個人化建議、成長數據圖表',
                 color: Colors.orange[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvicePage())),
               ),
@@ -187,7 +193,6 @@ class _HomePageState extends State<HomePage> {
                 context,
                 icon: Icons.emoji_events,
                 title: '成就徽章',
-                desc: '解鎖微藻主題成就',
                 color: Colors.purple[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementPage())),
               ),
@@ -196,16 +201,22 @@ class _HomePageState extends State<HomePage> {
                 context,
                 icon: Icons.menu_book,
                 title: '知識小學堂',
-                desc: '學習微藻知識、每日一題',
-                color: Colors.orange[100],
+                color: Colors.pink[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const KnowledgePage())),
+              ),
+              const SizedBox(height: 16),
+              _buildEntryCard(
+                context,
+                icon: Icons.quiz,
+                title: '挑戰小遊戲',
+                color: Colors.amber[100],
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuizGamePage())),
               ),
               const SizedBox(height: 16),
               _buildEntryCard(
                 context,
                 icon: Icons.share,
                 title: '社群分享',
-                desc: '成果卡片、照片、社群推廣',
                 color: Colors.green[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharePage())),
               ),
@@ -221,7 +232,12 @@ class _HomePageState extends State<HomePage> {
                       Icon(Icons.lightbulb, color: Colors.teal[700]),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(randomFact, style: const TextStyle(fontSize: 16, color: Colors.teal)),
+                        child: Text(_currentFact, style: const TextStyle(fontSize: 16, color: Colors.teal)),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.refresh, color: Colors.green),
+                        onPressed: _changeFact,
+                        tooltip: '換一題',
                       ),
                     ],
                   ),
@@ -234,15 +250,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEntryCard(BuildContext context, {required IconData icon, required String title, required String desc, required Color? color, required VoidCallback onTap}) {
+  Widget _buildEntryCard(BuildContext context, {required IconData icon, required String title, required Color? color, required VoidCallback onTap}) {
     return Card(
       color: color,
-      child: ListTile(
-        leading: Icon(icon, size: 36, color: Colors.green[700]),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        subtitle: Text(desc),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28.0, horizontal: 18.0),
+          child: Row(
+            children: [
+              Icon(icon, size: 40, color: Colors.green[700]),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+            ],
+          ),
+        ),
       ),
     );
   }
