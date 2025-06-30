@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
 import 'package:algae_care_app/services/notification_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -27,6 +28,8 @@ class _LogFormPageState extends State<LogFormPage> {
   bool _isWaterChanged = false;
   String? _customWaterColor;
   DateTime? _nextWaterChangeDate;
+  List<File> _images = []; // 新增：多圖
+  List<String> _actions = []; // 新增：多種操作標記
 
   @override
   void initState() {
@@ -67,12 +70,12 @@ class _LogFormPageState extends State<LogFormPage> {
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    final pickedFiles = await picker.pickMultiImage();
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
       setState(() {
-        _image = File(pickedFile.path);
+        _images = pickedFiles.map((f) => File(f.path)).toList();
       });
     }
   }
@@ -222,21 +225,31 @@ class _LogFormPageState extends State<LogFormPage> {
                 onSaved: (val) => _notes = val,
               ),
               const SizedBox(height: 16),
-              _image == null
-                  ? TextButton.icon(
-                      icon: const Icon(Icons.photo_camera),
-                      label: const Text('上傳照片'),
-                      onPressed: _pickImage,
-                    )
-                  : Column(
-                      children: [
-                        Image.file(_image!, height: 150),
-                        TextButton(
-                          onPressed: _pickImage,
-                          child: const Text('更換照片'),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('選擇照片'),
+                    onPressed: _pickImages,
+                  ),
+                  const SizedBox(width: 8),
+                  if (_images.isNotEmpty)
+                    Expanded(
+                      child: SizedBox(
+                        height: 60,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: _images.map((img) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: kIsWeb
+                              ? Icon(Icons.image, size: 48, color: Colors.grey)
+                              : Image.file(img, width: 60, height: 60, fit: BoxFit.cover),
+                          )).toList(),
                         ),
-                      ],
+                      ),
                     ),
+                ],
+              ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
@@ -305,6 +318,33 @@ class _LogFormPageState extends State<LogFormPage> {
                   }
                 },
                 child: const Text('儲存'),
+              ),
+              const SizedBox(height: 16),
+              // 操作標記多選
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilterChip(
+                    label: const Text('換水'),
+                    selected: _actions.contains('換水'),
+                    onSelected: (v) => setState(() => v ? _actions.add('換水') : _actions.remove('換水')),
+                  ),
+                  FilterChip(
+                    label: const Text('加光'),
+                    selected: _actions.contains('加光'),
+                    onSelected: (v) => setState(() => v ? _actions.add('加光') : _actions.remove('加光')),
+                  ),
+                  FilterChip(
+                    label: const Text('加肥'),
+                    selected: _actions.contains('加肥'),
+                    onSelected: (v) => setState(() => v ? _actions.add('加肥') : _actions.remove('加肥')),
+                  ),
+                  FilterChip(
+                    label: const Text('其他'),
+                    selected: _actions.contains('其他'),
+                    onSelected: (v) => setState(() => v ? _actions.add('其他') : _actions.remove('其他')),
+                  ),
+                ],
               ),
             ],
           ),
