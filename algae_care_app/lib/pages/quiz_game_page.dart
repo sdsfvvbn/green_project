@@ -102,7 +102,17 @@ class _QuizGamePageState extends State<QuizGamePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('微藻知識問答'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '微藻知識問答',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.quiz, size: 28),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -132,7 +142,14 @@ class _QuizGamePageState extends State<QuizGamePage> {
                   children: [
                     Text('第 ${_current + 1} 題', style: const TextStyle(fontSize: 18, color: Colors.grey)),
                     const SizedBox(height: 16),
-                    Text(_questions[_current]['question'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(_questions[_current]['question'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     ...List.generate(_questions[_current]['options'].length, (idx) {
                       return Container(
@@ -142,6 +159,9 @@ class _QuizGamePageState extends State<QuizGamePage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green[100],
                             foregroundColor: Colors.green[900],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 2,
                           ),
                           onPressed: () => _answer(idx),
                           child: Text(_questions[_current]['options'][idx]),

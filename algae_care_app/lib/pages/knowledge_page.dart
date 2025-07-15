@@ -206,7 +206,17 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
       },
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('微藻知識小學堂'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '微藻知識小學堂',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.school, size: 28),
+      ),
       body: Column(
         children: [
           Card(

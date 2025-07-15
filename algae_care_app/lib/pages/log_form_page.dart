@@ -84,15 +84,15 @@ class _LogFormPageState extends State<LogFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Padding(
-          padding: EdgeInsets.only(left: 16),
-          child: Text('日誌紀錄'),
+        title: const Text(
+          '日誌紀錄',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
-        backgroundColor: Colors.blue[700],
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.edit_note, size: 28),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -107,11 +107,14 @@ class _LogFormPageState extends State<LogFormPage> {
               ),
               DropdownButtonFormField<String>(
                 value: _type,
-                decoration: const InputDecoration(labelText: '種類'),
+                decoration: const InputDecoration(
+                  labelText: '種類',
+                  prefixIcon: Icon(Icons.grass),
+                ),
                 items: const [
                   DropdownMenuItem(value: '綠藻', child: Text('綠藻')),
                   DropdownMenuItem(value: '小球藻', child: Text('小球藻')),
-                  DropdownMenuItem(value: '藍綠藻', child: Text('藍綠藻')),
+                  DropdownMenuItem(value: '藍綠色', child: Text('藍綠色')),
                   DropdownMenuItem(value: '其他', child: Text('其他')),
                 ],
                 onChanged: (val) => setState(() {
@@ -128,7 +131,10 @@ class _LogFormPageState extends State<LogFormPage> {
                 ),
               DropdownButtonFormField<String>(
                 value: _waterColor,
-                decoration: const InputDecoration(labelText: '水色'),
+                decoration: const InputDecoration(
+                  labelText: '水色',
+                  prefixIcon: Icon(Icons.water_drop),
+                ),
                 items: const [
                   DropdownMenuItem(value: '淡綠色', child: Text('淡綠色')),
                   DropdownMenuItem(value: '綠色', child: Text('綠色')),
@@ -150,16 +156,25 @@ class _LogFormPageState extends State<LogFormPage> {
                   onSaved: (val) => _customWaterColor = val,
                 ),
               TextFormField(
-                decoration: const InputDecoration(labelText: '光照'),
+                decoration: const InputDecoration(
+                  labelText: '光照',
+                  prefixIcon: Icon(Icons.wb_sunny),
+                ),
                 onSaved: (val) => _light = val,
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: '溫度 (°C)'),
+                decoration: const InputDecoration(
+                  labelText: '溫度 (°C)',
+                  prefixIcon: Icon(Icons.thermostat),
+                ),
                 keyboardType: TextInputType.number,
                 onSaved: (val) => _temperature = val,
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'pH'),
+                decoration: const InputDecoration(
+                  labelText: 'pH',
+                  prefixIcon: Icon(Icons.science),
+                ),
                 keyboardType: TextInputType.number,
                 onSaved: (val) {
                   _phValue = double.tryParse(val ?? '');
@@ -220,7 +235,10 @@ class _LogFormPageState extends State<LogFormPage> {
                   ),
                 ),
               TextFormField(
-                decoration: const InputDecoration(labelText: '微藻描述'),
+                decoration: const InputDecoration(
+                  labelText: '微藻描述',
+                  prefixIcon: Icon(Icons.description),
+                ),
                 maxLines: 2,
                 onSaved: (val) => _notes = val,
               ),
@@ -252,8 +270,18 @@ class _LogFormPageState extends State<LogFormPage> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(child: CircularProgressIndicator()),
+                    );
                     _formKey.currentState!.save();
                     final log = AlgaeLog(
                       id: widget.logId,
@@ -270,6 +298,7 @@ class _LogFormPageState extends State<LogFormPage> {
                     );
                     // 新增：檢查同日期是否已有日誌
                     final existLog = await DatabaseService.instance.getLogByDate(log.date);
+                    Navigator.of(context).pop(); // 關閉 loading
                     if (existLog != null && widget.logId == null) {
                       final shouldOverwrite = await showDialog<bool>(
                         context: context,
@@ -300,7 +329,6 @@ class _LogFormPageState extends State<LogFormPage> {
                       } else {
                         await DatabaseService.instance.updateLog(log);
                       }
-                      
                       // 如果有設置預計下次換水日期，設置通知
                       if (log.nextWaterChangeDate != null) {
                         await NotificationService.instance.scheduleWaterChangeReminder(
@@ -310,7 +338,6 @@ class _LogFormPageState extends State<LogFormPage> {
                           body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
                         );
                       }
-                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('日誌已儲存')),
                       );

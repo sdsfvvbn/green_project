@@ -120,7 +120,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final userPosts = widget.posts.where((p) => p.author == widget.user).toList();
     final totalLikes = userPosts.fold<int>(0, (sum, p) => sum + p.likedBy.length);
     return Scaffold(
-      appBar: AppBar(title: Text('${_nickname ?? widget.user} 的主頁'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: Text(
+          '${_nickname ?? widget.user} 的主頁',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: const Icon(Icons.person, size: 28),
+      ),
       body: Column(
         children: [
           const SizedBox(height: 24),
