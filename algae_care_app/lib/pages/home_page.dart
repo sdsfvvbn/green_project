@@ -83,16 +83,21 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('個人化微藻養殖APP'),
+        title: const Text(
+          '個人化微藻養殖APP',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
         backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
         centerTitle: true,
+        leading: Icon(Icons.eco, size: 28),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: '微藻養殖設定',
-            onPressed: () async {
-              await Navigator.push(context, MaterialPageRoute(builder: (_) => const AlgaeSettingsPage()));
-              _loadAlgaeSettings();
+            icon: const Icon(Icons.settings, size: 26),
+            tooltip: '設定',
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
             },
           ),
         ],
@@ -173,14 +178,21 @@ class _HomePageState extends State<HomePage> {
                     ? const Center(child: CircularProgressIndicator())
                     : CarbonChartWidget(logs: _logs, algaeVolume: _algaeVolume)),
               const SizedBox(height: 32),
-              _buildEntryCard(
-                context,
-                icon: Icons.edit_note,
-                title: '日誌記錄',
-                color: Colors.blue[100],
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LogListPage())),
+              // 假設有主要功能卡片或列表
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                child: ListTile(
+                  leading: Icon(Icons.book, color: Colors.green[700], size: 32),
+                  title: Text('日誌紀錄', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  subtitle: Text('查看與管理你的微藻養殖日誌'),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
+                  onTap: () => Navigator.pushNamed(context, '/logList'),
+                  hoverColor: Colors.green[50],
+                ),
               ),
-              const SizedBox(height: 16),
+              Divider(thickness: 1, color: Colors.green[200], indent: 24, endIndent: 24),
               _buildEntryCard(
                 context,
                 icon: Icons.auto_awesome,

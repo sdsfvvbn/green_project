@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'pages/home_page.dart';
+import 'pages/log_list_page.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -27,22 +28,54 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '微藻養殖助手',
+      title: '個人化微藻養殖APP',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          primary: Colors.green,
-          secondary: Colors.teal,
+        fontFamily: 'NotoSansTC',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, primary: Colors.green),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          centerTitle: true,
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        useMaterial3: true,
         cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            elevation: 2,
           ),
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green, width: 2), borderRadius: BorderRadius.circular(12)),
+          labelStyle: const TextStyle(color: Colors.green),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: Colors.green,
+          contentTextStyle: TextStyle(color: Colors.white, fontSize: 16),
+          behavior: SnackBarBehavior.floating,
+        ),
+        dividerTheme: const DividerThemeData(
+          color: Colors.green,
+          thickness: 1,
+        ),
+        iconTheme: const IconThemeData(color: Colors.green, size: 24),
+        useMaterial3: true,
       ),
-      home: const HomePage(), // 保持首頁不變
+      home: const HomePage(),
+      routes: {
+        '/logList': (context) => const LogListPage(),
+        // 其他頁面可依需求補上
+      },
     );
   }
 }

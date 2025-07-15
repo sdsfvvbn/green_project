@@ -50,6 +50,7 @@ class _AdvicePageState extends State<AdvicePage> {
       appBar: AppBar(
         title: const Text('成長建議與數據'),
         backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

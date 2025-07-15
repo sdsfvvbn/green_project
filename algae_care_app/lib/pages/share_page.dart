@@ -131,7 +131,17 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
     final badgeCount = 5;
     final photoCount = 7;
     return Scaffold(
-      appBar: AppBar(title: const Text('社群分享'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '社群分享',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.share, size: 28),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -217,30 +227,6 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                         textStyle: const TextStyle(fontSize: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         foregroundColor: Colors.white,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.facebook, color: Colors.blue),
-                      label: const Text('分享到 FB'),
-                      onPressed: () => _shareToFB(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        minimumSize: const Size(160, 48),
-                        textStyle: const TextStyle(fontSize: 16, color: Colors.blue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: const BorderSide(color: Colors.blue),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.alternate_email, color: Colors.lightBlue),
-                      label: const Text('分享到 Twitter'),
-                      onPressed: () => _shareToTwitter(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        minimumSize: const Size(160, 48),
-                        textStyle: const TextStyle(fontSize: 16, color: Colors.lightBlue),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: const BorderSide(color: Colors.lightBlue),
                       ),
                     ),
                   ],
