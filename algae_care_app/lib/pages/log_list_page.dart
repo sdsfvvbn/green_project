@@ -4,7 +4,8 @@ import '../models/algae_log.dart';
 import '../services/database_service.dart';
 import 'log_form_page.dart';
 import 'dart:io';
-import 'dart:html' as html;
+// ignore: uri_does_not_exist
+import 'dart:html' as html; // 只會在 web 端有效
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
