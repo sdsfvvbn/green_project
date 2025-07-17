@@ -34,7 +34,7 @@ class _LogListPageState extends State<LogListPage> {
     AlgaeLog(
       id: 2,
       date: DateTime.now(),
-      waterColor: '淡綠',
+      waterColor: '淡綠色',
       temperature: 26.5,
       pH: 7.0,
       lightHours: 10,
@@ -45,7 +45,7 @@ class _LogListPageState extends State<LogListPage> {
     AlgaeLog(
       id: 3,
       date: DateTime(2025, 5, 15),
-      waterColor: '藍綠',
+      waterColor: '藍綠色',
       temperature: 23.5,
       pH: 8.1,
       lightHours: 9,
@@ -156,18 +156,22 @@ class _LogListPageState extends State<LogListPage> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[700],
-        title: Row(
-          children: [
-            const Text('日誌紀錄'),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: Icon(_showCalendar ? Icons.view_list : Icons.calendar_month),
-              onPressed: () => setState(() => _showCalendar = !_showCalendar),
-              tooltip: _showCalendar ? '切換列表' : '切換日曆',
-            ),
-          ],
+        title: const Text(
+          '日誌紀錄',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.book, size: 28),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 26),
+            tooltip: '新增日誌',
+            onPressed: () => _navigateToForm(),
+          ),
+        ],
       ),
       body: FutureBuilder<List<AlgaeLog>>(
         future: _logsFuture,
@@ -246,13 +250,12 @@ class _LogListPageState extends State<LogListPage> {
               final day = date.day.toString();
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 5,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
                   onTap: () => _navigateToForm(logId: log.id),
+                  hoverColor: Colors.green[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
@@ -264,6 +267,7 @@ class _LogListPageState extends State<LogListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              Icon(Icons.calendar_today, color: Colors.green[700], size: 20),
                               Text(weekDay, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16)),
                               Text(day, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 32)),
                             ],
@@ -277,14 +281,22 @@ class _LogListPageState extends State<LogListPage> {
                             children: [
                               Row(
                                 children: [
+                                  Icon(Icons.water_drop, color: Colors.blue[400], size: 18),
                                   Text('水色：${log.waterColor}'),
                                   const SizedBox(width: 12),
+                                  Icon(Icons.grass, color: Colors.green[400], size: 18),
                                   Text('種類：${log.type ?? ''}'),
                                   const SizedBox(width: 12),
+                                  Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
                                   Text('溫度：${log.temperature}°C'),
-                                  const SizedBox(width: 12),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Icon(Icons.science, color: Colors.purple[400], size: 18),
                                   Text('pH：${log.pH}'),
                                   const SizedBox(width: 12),
+                                  Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
                                   Text('光照：${log.lightHours}'),
                                   if (log.isWaterChanged)
                                     Container(
@@ -314,10 +326,16 @@ class _LogListPageState extends State<LogListPage> {
                               width: 60,
                               height: 60,
                               child: log.photoPath!.startsWith('http')
-                                  ? Image.network(log.photoPath!, fit: BoxFit.cover)
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(log.photoPath!, fit: BoxFit.cover),
+                                    )
                                   : kIsWeb
                                       ? Icon(Icons.image, size: 48, color: Colors.grey)
-                                      : Image.file(File(log.photoPath!), fit: BoxFit.cover),
+                                      : ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.file(File(log.photoPath!), fit: BoxFit.cover),
+                                        ),
                             ),
                           ),
                       ],
@@ -326,6 +344,7 @@ class _LogListPageState extends State<LogListPage> {
                 ),
               );
             }).toList(),
+            Divider(thickness: 1, color: Colors.green[100], indent: 24, endIndent: 24),
           ],
         );
       },
@@ -649,7 +668,10 @@ class _MockLogFormState extends State<_MockLogForm> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: Text(widget.log == null ? '新增日誌' : '編輯日誌'),
+            child: Text(
+              widget.log == null ? '新增日誌' : '編輯日誌',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.close),
@@ -666,8 +688,8 @@ class _MockLogFormState extends State<_MockLogForm> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  title: Text('日期: \\${_selectedDate.toLocal().toString().split(' ')[0]}'),
-                  trailing: const Icon(Icons.calendar_today),
+                  title: Text('日期: ${_selectedDate.toLocal().toString().split(' ')[0]}', style: const TextStyle(fontSize: 16, color: Color(0xFF333333))),
+                  trailing: const Icon(Icons.calendar_today, color: Color(0xFF388E3C)),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
@@ -684,11 +706,16 @@ class _MockLogFormState extends State<_MockLogForm> {
                 ),
                 DropdownButtonFormField<String>(
                   value: _type,
-                  decoration: const InputDecoration(labelText: '種類'),
+                  decoration: const InputDecoration(
+                    labelText: '種類',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   items: const [
                     DropdownMenuItem(value: '綠藻', child: Text('綠藻')),
                     DropdownMenuItem(value: '小球藻', child: Text('小球藻')),
-                    DropdownMenuItem(value: '藍綠藻', child: Text('藍綠藻')),
+                    DropdownMenuItem(value: '藍綠色', child: Text('藍綠色')),
                     DropdownMenuItem(value: '其他', child: Text('其他')),
                   ],
                   onChanged: (val) => setState(() {
@@ -705,7 +732,12 @@ class _MockLogFormState extends State<_MockLogForm> {
                   ),
                 DropdownButtonFormField<String>(
                   value: _waterColor,
-                  decoration: const InputDecoration(labelText: '水色'),
+                  decoration: const InputDecoration(
+                    labelText: '水色',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   items: const [
                     DropdownMenuItem(value: '淡綠色', child: Text('淡綠色')),
                     DropdownMenuItem(value: '綠色', child: Text('綠色')),
@@ -727,20 +759,32 @@ class _MockLogFormState extends State<_MockLogForm> {
                     onSaved: (val) => _customWaterColor = val,
                   ),
                 TextFormField(
-                  initialValue: _light,
-                  decoration: const InputDecoration(labelText: '光照(小時)'),
+                  decoration: const InputDecoration(
+                    labelText: '光照(小時)',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   keyboardType: TextInputType.number,
                   onSaved: (val) => _light = val ?? '',
                 ),
                 TextFormField(
-                  initialValue: _temperature,
-                  decoration: const InputDecoration(labelText: '溫度 (°C)'),
+                  decoration: const InputDecoration(
+                    labelText: '溫度 (°C)',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   keyboardType: TextInputType.number,
                   onSaved: (val) => _temperature = val ?? '',
                 ),
                 TextFormField(
-                  initialValue: _phValue != null ? _phValue.toString() : '',
-                  decoration: const InputDecoration(labelText: 'pH'),
+                  decoration: const InputDecoration(
+                    labelText: 'pH',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   keyboardType: TextInputType.number,
                   onChanged: (val) {
                     setState(() {
@@ -825,12 +869,18 @@ class _MockLogFormState extends State<_MockLogForm> {
                     ),
                   ),
                 TextFormField(
-                  initialValue: _notes,
-                  decoration: const InputDecoration(labelText: '微藻描述'),
+                  decoration: const InputDecoration(
+                    labelText: '微藻描述',
+                    labelStyle: TextStyle(color: Color(0xFF388E3C), fontSize: 14, fontWeight: FontWeight.w500),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                  ),
                   maxLines: 2,
                   onSaved: (val) => _notes = val ?? '',
                 ),
                 const SizedBox(height: 16),
+                // 增加欄位間距
+                SizedBox(height: 8),
                 _photoDataUrl == null
                     ? TextButton.icon(
                         icon: const Icon(Icons.photo_camera),
@@ -854,9 +904,14 @@ class _MockLogFormState extends State<_MockLogForm> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
+          child: const Text('取消', style: TextStyle(fontSize: 16)),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(100, 44),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           onPressed: () {
             _formKey.currentState!.save();
             Navigator.pop(

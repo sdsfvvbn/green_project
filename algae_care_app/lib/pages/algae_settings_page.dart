@@ -46,7 +46,17 @@ class _AlgaeSettingsPageState extends State<AlgaeSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('微藻養殖設定'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '微藻養殖設定',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.settings, size: 28),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -60,7 +70,7 @@ class _AlgaeSettingsPageState extends State<AlgaeSettingsPage> {
                 controller: _volumeController,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
-                  labelText: '養殖體積（公升）',
+                  labelText: '養殖體積 (L)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.water_drop),
                 ),
@@ -99,11 +109,25 @@ class _AlgaeSettingsPageState extends State<AlgaeSettingsPage> {
               ),
               const SizedBox(height: 32),
               Center(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text('儲存設定'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green[700], foregroundColor: Colors.white),
-                  onPressed: _saveSettings,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(child: CircularProgressIndicator()),
+                    );
+                    await _saveSettings();
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('設定已儲存')),
+                    );
+                  },
+                  child: const Text('儲存設定'),
                 ),
               ),
             ],

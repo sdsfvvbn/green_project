@@ -34,7 +34,7 @@ class AdviceService {
     }
     prompt += '請根據這些資料給我一個養殖建議。';
 
-    final url = Uri.parse('https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=$_apiKey');
+    final url = Uri.parse('https://generativelanguage.googleapis.com/v1/models/gemini-1.0-pro:generateContent?key=$_apiKey');
     final headers = {'Content-Type': 'application/json'};
     final body = jsonEncode({
       'contents': [

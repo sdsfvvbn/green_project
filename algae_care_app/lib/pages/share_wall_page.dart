@@ -155,7 +155,17 @@ class _ShareWallPageState extends State<ShareWallPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('社群分享牆'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '社群分享牆',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.wallpaper, size: 28),
+      ),
       body: ListView.builder(
         itemCount: posts.length,
         itemBuilder: (context, idx) {

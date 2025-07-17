@@ -95,7 +95,17 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
       grouped[a['type']]!.add(a);
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('成就徽章'), backgroundColor: Colors.green[700]),
+      appBar: AppBar(
+        title: const Text(
+          '成就徽章',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        ),
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.emoji_events, size: 28),
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 12),
         children: [
