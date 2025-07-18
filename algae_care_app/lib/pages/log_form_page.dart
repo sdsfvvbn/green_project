@@ -35,11 +35,33 @@ class _LogFormPageState extends State<LogFormPage> {
   void initState() {
     super.initState();
     if (widget.logId != null) {
-      // TODO: 從資料庫讀取該筆日誌，並預設填入各欄位（含 notes）
+      _loadLogData(widget.logId!);
     }
     _phValue = null;
     _type = null;
     _isWaterChanged = false;
+  }
+
+  Future<void> _loadLogData(int logId) async {
+    final log = await DatabaseService.instance.getLog(logId);
+    if (log != null) {
+      setState(() {
+        _selectedDate = log.date;
+        _type = log.type;
+        _customType = null;
+        _waterColor = log.waterColor;
+        _customWaterColor = null;
+        _light = log.lightHours.toString();
+        _temperature = log.temperature.toString();
+        _phValue = log.pH;
+        _notes = log.notes;
+        _isWaterChanged = log.isWaterChanged;
+        _nextWaterChangeDate = log.nextWaterChangeDate;
+        if (log.photoPath != null && log.photoPath!.isNotEmpty) {
+          _image = File(log.photoPath!);
+        }
+      });
+    }
   }
 
   Future<void> _pickDate(BuildContext context) async {
@@ -72,10 +94,10 @@ class _LogFormPageState extends State<LogFormPage> {
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final pickedFiles = await picker.pickMultiImage();
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       setState(() {
-        _images = pickedFiles.map((f) => File(f.path)).toList();
+        _image = File(pickedFile.path);
       });
     }
   }
@@ -92,7 +114,10 @@ class _LogFormPageState extends State<LogFormPage> {
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.edit_note, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -101,8 +126,17 @@ class _LogFormPageState extends State<LogFormPage> {
           child: ListView(
             children: [
               ListTile(
-                title: Text(_selectedDate == null ? '選擇日期' : '日期: \\${_selectedDate!.toLocal()}'.split(' ')[0]),
-                // trailing: const Icon(Icons.calendar_today),
+                title: Text(
+                  _selectedDate == null
+                      ? '選擇日期'
+                      : '已選日期：${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[800],
+                  ),
+                ),
+                trailing: const Icon(Icons.calendar_today),
                 onTap: () => _pickDate(context),
               ),
               const SizedBox(height: 16),
@@ -213,6 +247,7 @@ class _LogFormPageState extends State<LogFormPage> {
                     borderSide: BorderSide(color: Colors.green, width: 2),
                   ),
                 ),
+                initialValue: _light,
                 onSaved: (val) => _light = val,
               ),
               const SizedBox(height: 16),
@@ -230,6 +265,7 @@ class _LogFormPageState extends State<LogFormPage> {
                   ),
                 ),
                 keyboardType: TextInputType.number,
+                initialValue: _temperature,
                 onSaved: (val) => _temperature = val,
               ),
               const SizedBox(height: 16),
@@ -247,6 +283,7 @@ class _LogFormPageState extends State<LogFormPage> {
                   ),
                 ),
                 keyboardType: TextInputType.number,
+                initialValue: _phValue?.toString(),
                 onSaved: (val) {
                   _phValue = double.tryParse(val ?? '');
                 },
@@ -294,7 +331,7 @@ class _LogFormPageState extends State<LogFormPage> {
                                 Icon(Icons.water_drop, color: Colors.blue[600], size: 18),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '下次換水: \\${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                                  '下次換水: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
                                   style: TextStyle(color: Colors.blue[700], fontWeight: FontWeight.w500, fontSize: 14),
                                 ),
                                 const SizedBox(width: 4),
@@ -322,32 +359,51 @@ class _LogFormPageState extends State<LogFormPage> {
                   ),
                 ),
                 maxLines: 2,
+                initialValue: _notes,
                 onSaved: (val) => _notes = val,
               ),
               const SizedBox(height: 20),
               // 圖片上傳區塊（可根據你的需求調整）
               if (!kIsWeb) ...[
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.photo_camera),
-                      label: const Text('上傳照片'),
-                      onPressed: _pickImages,
+                    Center(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.photo_camera),
+                        label: const Text('上傳照片'),
+                        onPressed: _pickImages,
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    if (_images.isNotEmpty)
-                      Expanded(
-                        child: SizedBox(
-                          height: 60,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _images.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
-                            itemBuilder: (context, idx) => ClipRRect(
+                    const SizedBox(height: 12),
+                    if (_image != null)
+                      SizedBox(
+                        height: 60,
+                        child: Stack(
+                          children: [
+                            ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(_images[idx], width: 60, height: 60, fit: BoxFit.cover),
+                              child: Image.file(_image!, width: 60, height: 60, fit: BoxFit.cover),
                             ),
-                          ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _image = null;
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
@@ -355,82 +411,105 @@ class _LogFormPageState extends State<LogFormPage> {
                 const SizedBox(height: 20),
               ],
               const SizedBox(height: 24),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) => const Center(child: CircularProgressIndicator()),
-                    );
-                    _formKey.currentState!.save();
-                    final log = AlgaeLog(
-                      id: widget.logId,
-                      date: _selectedDate ?? DateTime.now(),
-                      waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
-                      temperature: double.tryParse(_temperature ?? '') ?? 0,
-                      pH: _phValue ?? 0,
-                      lightHours: int.tryParse(_light ?? '') ?? 0,
-                      photoPath: _image?.path,
-                      notes: _notes ?? '',
-                      type: _type == '其他' ? _customType : _type,
-                      isWaterChanged: _isWaterChanged,
-                      nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
-                    );
-                    // 新增：檢查同日期是否已有日誌
-                    final existLog = await DatabaseService.instance.getLogByDate(log.date);
-                    Navigator.of(context).pop(); // 關閉 loading
-                    if (existLog != null && widget.logId == null) {
-                      final shouldOverwrite = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('覆蓋提醒'),
-                          content: const Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('取消'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('覆蓋'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (shouldOverwrite == true) {
-                        await DatabaseService.instance.updateLog(log.copyWith(id: existLog.id));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('日誌已覆蓋')),
-                        );
-                      }
-                    } else {
-                      if (widget.logId == null) {
-                        await DatabaseService.instance.createLog(log);
-                      } else {
-                        await DatabaseService.instance.updateLog(log);
-                      }
-                      // 如果有設置預計下次換水日期，設置通知
-                      // if (log.nextWaterChangeDate != null) {
-                      //   await NotificationService.instance.scheduleWaterChangeReminder(
-                      //     id: log.id ?? DateTime.now().millisecondsSinceEpoch,
-                      //     scheduledDate: log.nextWaterChangeDate!,
-                      //     title: '換水提醒',
-                      //     body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
-                      //   );
-                      // }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('日誌已儲存')),
-                      );
-                    }
-                  }
-                },
-                child: const Text('儲存'),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () async {
+                        try {
+                          if (_formKey.currentState!.validate()) {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(child: CircularProgressIndicator()),
+                            );
+                            _formKey.currentState!.save();
+                            final log = AlgaeLog(
+                              id: widget.logId,
+                              date: _selectedDate ?? DateTime.now(),
+                              waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
+                              temperature: double.tryParse(_temperature ?? '') ?? 0,
+                              pH: _phValue ?? 0,
+                              lightHours: int.tryParse(_light ?? '') ?? 0,
+                              photoPath: _image?.path,
+                              notes: _notes ?? '',
+                              type: _type == '其他' ? _customType : _type,
+                              isWaterChanged: _isWaterChanged,
+                              nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
+                            );
+                            final existLog = await DatabaseService.instance.getLogByDate(log.date);
+                            Navigator.of(context).pop(); // 關閉 loading
+                            if (existLog != null && widget.logId == null) {
+                              final shouldOverwrite = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('覆蓋提醒'),
+                                  content: const Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('取消'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('覆蓋'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (shouldOverwrite == true) {
+                                await DatabaseService.instance.updateLog(log.copyWith(id: existLog.id));
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('日誌已覆蓋')),
+                                  );
+                                  Navigator.of(context).pop();
+                                }
+                              }
+                            } else {
+                              if (widget.logId == null) {
+                                await DatabaseService.instance.createLog(log);
+                              } else {
+                                await DatabaseService.instance.updateLog(log);
+                              }
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('日誌已儲存')),
+                                );
+                                Navigator.of(context).pop();
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          print('儲存失敗: $e');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('儲存失敗: $e')),
+                          );
+                        }
+                      },
+                      child: const Text('儲存'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('取消'),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               // 操作標記多選

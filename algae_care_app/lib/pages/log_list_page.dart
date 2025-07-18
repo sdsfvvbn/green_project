@@ -266,7 +266,6 @@ class _LogListPageState extends State<LogListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Icon(Icons.calendar_today, color: Colors.green[700], size: 20),
                               Text(weekDay, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16)),
                               Text(day, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 32)),
                             ],
@@ -278,25 +277,46 @@ class _LogListPageState extends State<LogListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Icon(Icons.water_drop, color: Colors.blue[400], size: 18),
-                                  Text('水色：${log.waterColor}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.grass, color: Colors.green[400], size: 18),
-                                  Text('種類：${log.type ?? ''}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
-                                  Text('溫度：${log.temperature}°C'),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Icon(Icons.science, color: Colors.purple[400], size: 18),
-                                  Text('pH：${log.pH}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
-                                  Text('光照：${log.lightHours}'),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.water_drop, color: Colors.blue[400], size: 18),
+                                      Text('水色：${log.waterColor}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.grass, color: Colors.green[400], size: 18),
+                                      Text('種類：${log.type ?? ''}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
+                                      Text('溫度：${log.temperature}°C'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.science, color: Colors.purple[400], size: 18),
+                                      Text('pH：${log.pH}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
+                                      Text('光照：${log.lightHours}'),
+                                    ],
+                                  ),
                                   if (log.isWaterChanged)
                                     Container(
                                       margin: const EdgeInsets.only(left: 8),
