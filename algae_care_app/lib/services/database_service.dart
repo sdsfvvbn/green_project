@@ -16,6 +16,7 @@ class DatabaseService {
   }
 
   Future<Database> _initDB(String filePath) async {
+    print('Initializing DB...');
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
@@ -28,6 +29,7 @@ class DatabaseService {
   }
 
   Future<void> _createDB(Database db, int version) async {
+    print('Creating DB...');
     await db.execute('''
       CREATE TABLE algae_logs(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,6 +55,7 @@ class DatabaseService {
   }
 
   Future<int> createLog(AlgaeLog log) async {
+    print('createLog called with: ${log.toMap()}');
     final db = await database;
     return await db.insert('algae_logs', log.toMap());
   }

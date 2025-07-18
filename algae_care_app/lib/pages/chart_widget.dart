@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 
-class GrowthChartWidget extends StatelessWidget {
+class GrowthChartWidget extends StatefulWidget {
   final List<double> data;
 
   const GrowthChartWidget({super.key, required this.data});
+
+  @override
+  State<GrowthChartWidget> createState() => _GrowthChartWidgetState();
+}
+
+class _GrowthChartWidgetState extends State<GrowthChartWidget> {
+  String? selectedSpecies;
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +19,7 @@ class GrowthChartWidget extends StatelessWidget {
       children: [
         DropdownButton<String>(
           value: selectedSpecies,
-          items: ['綠藻', '小球藻', '不知道是什麼藻類'].map((e) => DropdownMenuItem(
+          items: ['綠藻', '小球藻', '藍綠藻', '其他'].map((e) => DropdownMenuItem(
             value: e,
             child: Text(e),
           )).toList(),
