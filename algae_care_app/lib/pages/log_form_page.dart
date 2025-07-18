@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
-import 'package:algae_care_app/services/notification_service.dart';
+// import 'package:algae_care_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class LogFormPage extends StatefulWidget {
@@ -102,14 +102,23 @@ class _LogFormPageState extends State<LogFormPage> {
             children: [
               ListTile(
                 title: Text(_selectedDate == null ? '選擇日期' : '日期: \\${_selectedDate!.toLocal()}'.split(' ')[0]),
-                trailing: const Icon(Icons.calendar_today),
+                // trailing: const Icon(Icons.calendar_today),
                 onTap: () => _pickDate(context),
               ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _type,
                 decoration: const InputDecoration(
                   labelText: '種類',
                   prefixIcon: Icon(Icons.grass),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 items: const [
                   DropdownMenuItem(value: '綠藻', child: Text('綠藻')),
@@ -124,16 +133,38 @@ class _LogFormPageState extends State<LogFormPage> {
                 onSaved: (val) => _type = val,
               ),
               if (_type == '其他')
-                TextFormField(
-                  decoration: const InputDecoration(labelText: '請輸入種類'),
-                  onChanged: (val) => _customType = val,
-                  onSaved: (val) => _customType = val,
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: '請輸入種類',
+                      contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      border: UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.green, width: 2),
+                      ),
+                    ),
+                    onChanged: (val) => _customType = val,
+                    onSaved: (val) => _customType = val,
+                  ),
                 ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _waterColor,
                 decoration: const InputDecoration(
                   labelText: '水色',
                   prefixIcon: Icon(Icons.water_drop),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 items: const [
                   DropdownMenuItem(value: '淡綠色', child: Text('淡綠色')),
@@ -150,124 +181,179 @@ class _LogFormPageState extends State<LogFormPage> {
                 onSaved: (val) => _waterColor = val,
               ),
               if (_waterColor == '其他')
-                TextFormField(
-                  decoration: const InputDecoration(labelText: '請輸入水色'),
-                  onChanged: (val) => _customWaterColor = val,
-                  onSaved: (val) => _customWaterColor = val,
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: '請輸入水色',
+                      contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      border: UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.green, width: 2),
+                      ),
+                    ),
+                    onChanged: (val) => _customWaterColor = val,
+                    onSaved: (val) => _customWaterColor = val,
+                  ),
                 ),
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: '光照',
                   prefixIcon: Icon(Icons.wb_sunny),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 onSaved: (val) => _light = val,
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: '溫度 (°C)',
                   prefixIcon: Icon(Icons.thermostat),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (val) => _temperature = val,
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: 'pH',
                   prefixIcon: Icon(Icons.science),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (val) {
                   _phValue = double.tryParse(val ?? '');
                 },
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const Text('換水:', style: TextStyle(fontSize: 16)),
-                  const SizedBox(width: 8),
-                  Checkbox(
-                    value: _isWaterChanged,
-                    onChanged: (val) async {
-                      setState(() => _isWaterChanged = val ?? false);
-                      // 當勾選換水時，自動跳出預計下次換水日期選擇
-                      if (val == true) {
-                        await _pickNextWaterChangeDate(context);
-                      } else {
-                        // 當取消勾選換水時，清除預計下次換水日期
-                        setState(() {
-                          _nextWaterChangeDate = null;
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-              
-              // 顯示已選擇的預計下次換水日期
-              if (_isWaterChanged && _nextWaterChangeDate != null)
-                Container(
-                  margin: const EdgeInsets.only(left: 16, top: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.water_drop, color: Colors.blue[600], size: 20),
-                      const SizedBox(width: 8),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green[100]!),
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: _isWaterChanged,
+                      onChanged: (val) async {
+                        setState(() => _isWaterChanged = val ?? false);
+                        if (val == true) {
+                          await _pickNextWaterChangeDate(context);
+                        } else {
+                          setState(() {
+                            _nextWaterChangeDate = null;
+                          });
+                        }
+                      },
+                    ),
+                    const Text('今日有換水', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    if (_isWaterChanged && _nextWaterChangeDate != null)
                       Expanded(
-                        child: Text(
-                          '預計下次換水日期: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
-                          style: TextStyle(
-                            color: Colors.blue[700],
-                            fontWeight: FontWeight.w500,
+                        child: GestureDetector(
+                          onTap: () => _pickNextWaterChangeDate(context),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue[200]!),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.water_drop, color: Colors.blue[600], size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '下次換水: \\${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                                  style: TextStyle(color: Colors.blue[700], fontWeight: FontWeight.w500, fontSize: 14),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit, size: 16, color: Colors.blue),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 18),
-                        onPressed: () => _pickNextWaterChangeDate(context),
-                        tooltip: '修改日期',
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: '微藻描述',
                   prefixIcon: Icon(Icons.description),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  border: UnderlineInputBorder(),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.green, width: 2),
+                  ),
                 ),
                 maxLines: 2,
                 onSaved: (val) => _notes = val,
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('選擇照片'),
-                    onPressed: _pickImages,
-                  ),
-                  const SizedBox(width: 8),
-                  if (_images.isNotEmpty)
-                    Expanded(
-                      child: SizedBox(
-                        height: 60,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: _images.map((img) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: kIsWeb
-                              ? Icon(Icons.image, size: 48, color: Colors.grey)
-                              : Image.file(img, width: 60, height: 60, fit: BoxFit.cover),
-                          )).toList(),
+              const SizedBox(height: 20),
+              // 圖片上傳區塊（可根據你的需求調整）
+              if (!kIsWeb) ...[
+                Row(
+                  children: [
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.photo_camera),
+                      label: const Text('上傳照片'),
+                      onPressed: _pickImages,
+                    ),
+                    const SizedBox(width: 12),
+                    if (_images.isNotEmpty)
+                      Expanded(
+                        child: SizedBox(
+                          height: 60,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _images.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (context, idx) => ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(_images[idx], width: 60, height: 60, fit: BoxFit.cover),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -330,14 +416,14 @@ class _LogFormPageState extends State<LogFormPage> {
                         await DatabaseService.instance.updateLog(log);
                       }
                       // 如果有設置預計下次換水日期，設置通知
-                      if (log.nextWaterChangeDate != null) {
-                        await NotificationService.instance.scheduleWaterChangeReminder(
-                          id: log.id ?? DateTime.now().millisecondsSinceEpoch,
-                          scheduledDate: log.nextWaterChangeDate!,
-                          title: '換水提醒',
-                          body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
-                        );
-                      }
+                      // if (log.nextWaterChangeDate != null) {
+                      //   await NotificationService.instance.scheduleWaterChangeReminder(
+                      //     id: log.id ?? DateTime.now().millisecondsSinceEpoch,
+                      //     scheduledDate: log.nextWaterChangeDate!,
+                      //     title: '換水提醒',
+                      //     body: '今天是預計換水的日子，記得檢查您的微藻養殖狀況！',
+                      //   );
+                      // }
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('日誌已儲存')),
                       );

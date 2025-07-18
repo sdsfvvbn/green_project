@@ -4,8 +4,7 @@ import '../models/algae_log.dart';
 import '../services/database_service.dart';
 import 'log_form_page.dart';
 import 'dart:io';
-// ignore: uri_does_not_exist
-import 'dart:html' as html; // 只會在 web 端有效
+import 'image_picker_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -641,22 +640,12 @@ class _MockLogFormState extends State<_MockLogForm> {
   }
 
   Future<void> _pickWebImage() async {
-    // ignore: undefined_prefixed_name
-    final uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = 'image/*';
-    uploadInput.click();
-    uploadInput.onChange.listen((event) {
-      final file = uploadInput.files?.first;
-      if (file != null) {
-        final reader = html.FileReader();
-        reader.readAsDataUrl(file);
-        reader.onLoadEnd.listen((event) {
-          setState(() {
-            _photoDataUrl = reader.result as String;
-          });
-        });
-      }
-    });
+    final imageDataUrl = await pickImage();
+    if (imageDataUrl != null) {
+      setState(() {
+        _photoDataUrl = imageDataUrl;
+      });
+    }
   }
 
   @override
