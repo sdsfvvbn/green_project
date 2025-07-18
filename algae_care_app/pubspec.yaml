@@ -47,6 +47,7 @@ dependencies:
   table_calendar: ^3.0.9
   timezone: ^0.9.2  # 時區處理
   file_picker: ^10.1.7   # ← 加這一行，建議用最新版
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:

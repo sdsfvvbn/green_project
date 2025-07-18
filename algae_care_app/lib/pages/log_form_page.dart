@@ -157,7 +157,7 @@ class _LogFormPageState extends State<LogFormPage> {
                 items: const [
                   DropdownMenuItem(value: '綠藻', child: Text('綠藻')),
                   DropdownMenuItem(value: '小球藻', child: Text('小球藻')),
-                  DropdownMenuItem(value: '藍綠色', child: Text('藍綠色')),
+                  DropdownMenuItem(value: '藍綠藻', child: Text('藍綠藻')),
                   DropdownMenuItem(value: '其他', child: Text('其他')),
                 ],
                 onChanged: (val) => setState(() {
