@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'pages/home_page.dart';
 import 'pages/log_list_page.dart';
+import 'pages/algae_profile_list_page.dart';
 // import 'services/notification_service.dart';
 
 void main() async {
