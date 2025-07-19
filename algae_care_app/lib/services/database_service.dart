@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/algae_log.dart';
 import 'package:flutter/foundation.dart';
+import '../models/algae_profile.dart';
 
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
@@ -37,12 +38,30 @@ class DatabaseService {
         waterColor TEXT NOT NULL,
         temperature REAL NOT NULL,
         pH REAL NOT NULL,
-        lightHours INTEGER NOT NULL,
+        lightHours REAL NOT NULL,
         photoPath TEXT,
         notes TEXT,
         type TEXT,
         isWaterChanged INTEGER DEFAULT 0,
         nextWaterChangeDate TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE algae_profile(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        species TEXT NOT NULL,
+        name TEXT,
+        ageDays INTEGER NOT NULL,
+        length REAL NOT NULL,
+        width REAL NOT NULL,
+        waterSource TEXT NOT NULL,
+        lightType TEXT NOT NULL,
+        lightTypeDescription TEXT,
+        lightIntensityLevel TEXT,
+        waterChangeFrequency INTEGER NOT NULL,
+        waterVolume REAL NOT NULL,
+        fertilizerType TEXT NOT NULL,
+        fertilizerDescription TEXT
       )
     ''');
   }
@@ -52,6 +71,25 @@ class DatabaseService {
       // Add nextWaterChangeDate column
       await db.execute('ALTER TABLE algae_logs ADD COLUMN nextWaterChangeDate TEXT');
     }
+    // 若未來升級時補上 profile 表
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS algae_profile(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        species TEXT NOT NULL,
+        name TEXT,
+        ageDays INTEGER NOT NULL,
+        length REAL NOT NULL,
+        width REAL NOT NULL,
+        waterSource TEXT NOT NULL,
+        lightType TEXT NOT NULL,
+        lightTypeDescription TEXT,
+        lightIntensity REAL NOT NULL,
+        waterChangeFrequency INTEGER NOT NULL,
+        waterVolume REAL NOT NULL,
+        fertilizerType TEXT NOT NULL,
+        fertilizerDescription TEXT
+      )
+    ''');
   }
 
   Future<int> createLog(AlgaeLog log) async {
@@ -136,5 +174,36 @@ class DatabaseService {
       whereArgs: [todayStr],
     );
     return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
+  }
+
+  // --- AlgaeProfile CRUD ---
+  Future<int> createProfile(AlgaeProfile profile) async {
+    final db = await database;
+    return await db.insert('algae_profile', profile.toMap());
+  }
+
+  Future<List<AlgaeProfile>> getAllProfiles() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('algae_profile');
+    return List.generate(maps.length, (i) => AlgaeProfile.fromMap(maps[i]));
+  }
+
+  Future<int> updateProfile(AlgaeProfile profile) async {
+    final db = await database;
+    return await db.update(
+      'algae_profile',
+      profile.toMap(),
+      where: 'id = ?',
+      whereArgs: [profile.id],
+    );
+  }
+
+  Future<int> deleteProfile(int id) async {
+    final db = await database;
+    return await db.delete(
+      'algae_profile',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 } 

@@ -5,6 +5,7 @@ import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
 // import 'package:algae_care_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/cupertino.dart';
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -16,7 +17,8 @@ class LogFormPage extends StatefulWidget {
 
 class _LogFormPageState extends State<LogFormPage> {
   final _formKey = GlobalKey<FormState>();
-  DateTime? _selectedDate;
+  // 1. 預設日期為今天
+  DateTime? _selectedDate = DateTime.now();
   String? _waterColor;
   String? _light;
   String? _temperature;
@@ -30,6 +32,12 @@ class _LogFormPageState extends State<LogFormPage> {
   DateTime? _nextWaterChangeDate;
   List<File> _images = []; // 新增：多圖
   List<String> _actions = []; // 新增：多種操作標記
+
+  // 1. 新增光照、溫度、pH的狀態變數
+  int _lightHour = 0;
+  int _lightMinute = 0;
+  int _temperatureValue = 25;
+  double _phSliderValue = 7.0;
 
   @override
   void initState() {
@@ -60,6 +68,13 @@ class _LogFormPageState extends State<LogFormPage> {
         if (log.photoPath != null && log.photoPath!.isNotEmpty) {
           _image = File(log.photoPath!);
         }
+        // 2. _loadLogData 時自動拆解小時/分鐘
+        _lightHour = log.lightHours.floor();
+        _lightMinute = ((log.lightHours - _lightHour) * 60).round();
+        // 新增：溫度
+        _temperatureValue = log.temperature.round();
+        // 新增：pH
+        _phSliderValue = log.pH;
       });
     }
   }
@@ -127,9 +142,7 @@ class _LogFormPageState extends State<LogFormPage> {
             children: [
               ListTile(
                 title: Text(
-                  _selectedDate == null
-                      ? '選擇日期'
-                      : '已選日期：${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}',
+                  '日期：${_selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : ''}',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -234,59 +247,119 @@ class _LogFormPageState extends State<LogFormPage> {
                   ),
                 ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: '光照',
-                  prefixIcon: Icon(Icons.wb_sunny),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                initialValue: _light,
-                onSaved: (val) => _light = val,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: '溫度 (°C)',
-                  prefixIcon: Icon(Icons.thermostat),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                initialValue: _temperature,
-                onSaved: (val) => _temperature = val,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'pH',
-                  prefixIcon: Icon(Icons.science),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                initialValue: _phValue?.toString(),
-                onSaved: (val) {
-                  _phValue = double.tryParse(val ?? '');
+              // 光照欄位改成如下：
+              GestureDetector(
+                onTap: () async {
+                  int tempHour = _lightHour;
+                  int tempMinute = (_lightMinute / 5).round();
+                  await showModalBottomSheet(
+                    context: context,
+                    builder: (ctx) {
+                      return SizedBox(
+                        height: 250,
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                SizedBox(width: 100, child: Center(child: Text('小時', style: TextStyle(fontWeight: FontWeight.bold)))),
+                                SizedBox(width: 100, child: Center(child: Text('分鐘', style: TextStyle(fontWeight: FontWeight.bold)))),
+                              ],
+                            ),
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    child: CupertinoPicker(
+                                      scrollController: FixedExtentScrollController(initialItem: tempHour),
+                                      itemExtent: 40,
+                                      magnification: 1.2,
+                                      useMagnifier: true,
+                                      onSelectedItemChanged: (v) => tempHour = v,
+                                      children: List.generate(25, (idx) => Center(child: Text('$idx'))),
+                                    ),
+                                  ),
+                                  SizedBox(width: 24), // 空白取代原本的「:」
+                                  SizedBox(
+                                    width: 100,
+                                    child: CupertinoPicker(
+                                      scrollController: FixedExtentScrollController(initialItem: tempMinute),
+                                      itemExtent: 40,
+                                      magnification: 1.2,
+                                      useMagnifier: true,
+                                      onSelectedItemChanged: (v) => tempMinute = v,
+                                      children: List.generate(12, (idx) => Center(child: Text('${idx * 5}'))),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                  setState(() {
+                    _lightHour = tempHour;
+                    _lightMinute = tempMinute * 5;
+                  });
                 },
+                child: ListTile(
+                  title: Text('光照'),
+                  subtitle: Text('${_lightHour} 小時 ${_lightMinute} 分'),
+                  trailing: const Icon(Icons.wb_sunny),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // 溫度欄位改成如下：
+              GestureDetector(
+                onTap: () async {
+                  int temp = _temperatureValue;
+                  await showModalBottomSheet(
+                    context: context,
+                    builder: (ctx) {
+                      return SizedBox(
+                        height: 250,
+                        child: ListWheelScrollView.useDelegate(
+                          itemExtent: 40,
+                          onSelectedItemChanged: (v) => temp = v,
+                          controller: FixedExtentScrollController(initialItem: _temperatureValue),
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            builder: (ctx, idx) => idx <= 50 ? Center(child: Text('$idx °C')) : null,
+                            childCount: 51,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                  setState(() {
+                    _temperatureValue = temp;
+                  });
+                },
+                child: ListTile(
+                  title: Text('溫度 (°C)'),
+                  subtitle: Text('$_temperatureValue °C'),
+                  trailing: const Icon(Icons.thermostat),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // pH欄位改成如下：
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('pH', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Slider(
+                    min: 0,
+                    max: 14,
+                    divisions: 140,
+                    value: _phSliderValue,
+                    label: _phSliderValue.toStringAsFixed(1),
+                    onChanged: (v) => setState(() => _phSliderValue = v),
+                  ),
+                  Center(child: Text('目前值：${_phSliderValue.toStringAsFixed(1)}')),
+                ],
               ),
               const SizedBox(height: 20),
               Container(
@@ -429,13 +502,14 @@ class _LogFormPageState extends State<LogFormPage> {
                               builder: (context) => const Center(child: CircularProgressIndicator()),
                             );
                             _formKey.currentState!.save();
+                            // 儲存時要把這三個欄位的值正確存進 AlgaeLog
                             final log = AlgaeLog(
                               id: widget.logId,
                               date: _selectedDate ?? DateTime.now(),
                               waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
-                              temperature: double.tryParse(_temperature ?? '') ?? 0,
-                              pH: _phValue ?? 0,
-                              lightHours: int.tryParse(_light ?? '') ?? 0,
+                              temperature: _temperatureValue.toDouble(),
+                              pH: _phSliderValue,
+                              lightHours: _lightHour + _lightMinute/60.0,
                               photoPath: _image?.path,
                               notes: _notes ?? '',
                               type: _type == '其他' ? _customType : _type,

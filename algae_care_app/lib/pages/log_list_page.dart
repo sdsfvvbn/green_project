@@ -931,7 +931,7 @@ class _MockLogFormState extends State<_MockLogForm> {
                 waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
                 temperature: double.tryParse(_temperature) ?? 0,
                 pH: _phValue ?? 0,
-                lightHours: int.tryParse(_light) ?? 0,
+                lightHours: double.tryParse(_light) ?? 0,
                 photoPath: _photoDataUrl,
                 notes: _notes,
                 type: _type == '其他' ? _customType : _type,
