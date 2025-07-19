@@ -8,7 +8,7 @@ class AlgaeProfile {
   String waterSource;
   String lightType;
   String? lightTypeDescription;
-  double lightIntensity;
+  String? lightIntensityLevel;
   int waterChangeFrequency;
   double waterVolume;
   String fertilizerType;
@@ -24,7 +24,7 @@ class AlgaeProfile {
     required this.waterSource,
     required this.lightType,
     this.lightTypeDescription,
-    required this.lightIntensity,
+    this.lightIntensityLevel,
     required this.waterChangeFrequency,
     required this.waterVolume,
     required this.fertilizerType,
@@ -42,7 +42,7 @@ class AlgaeProfile {
       'waterSource': waterSource,
       'lightType': lightType,
       'lightTypeDescription': lightTypeDescription,
-      'lightIntensity': lightIntensity,
+      'lightIntensityLevel': lightIntensityLevel,
       'waterChangeFrequency': waterChangeFrequency,
       'waterVolume': waterVolume,
       'fertilizerType': fertilizerType,
@@ -61,7 +61,7 @@ class AlgaeProfile {
       waterSource: map['waterSource'] as String,
       lightType: map['lightType'] as String,
       lightTypeDescription: map['lightTypeDescription'] as String?,
-      lightIntensity: map['lightIntensity'] is int ? (map['lightIntensity'] as int).toDouble() : map['lightIntensity'] as double,
+      lightIntensityLevel: map['lightIntensityLevel'] as String?,
       waterChangeFrequency: map['waterChangeFrequency'] as int,
       waterVolume: map['waterVolume'] is int ? (map['waterVolume'] as int).toDouble() : map['waterVolume'] as double,
       fertilizerType: map['fertilizerType'] as String,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/algae_profile.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../services/database_service.dart';
 
 class AlgaeProfileEditPage extends StatefulWidget {
   final AlgaeProfile? profile;
@@ -22,7 +23,8 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
   late String waterSource;
   late String lightType;
   String? lightTypeDescription;
-  late double lightIntensity;
+  // 1. 新增光照強度level狀態變數
+  String _lightIntensityLevel = '中光';
   late int waterChangeFrequency;
   late double waterVolume;
   late String fertilizerType;
@@ -41,7 +43,8 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
     waterSource = p?.waterSource ?? '自來水';
     lightType = p?.lightType ?? 'LED';
     lightTypeDescription = p?.lightTypeDescription;
-    lightIntensity = p?.lightIntensity ?? 1000;
+    // _loadLogData 時自動帶入舊資料
+    _lightIntensityLevel = p?.lightIntensityLevel ?? '中光';
     waterChangeFrequency = p?.waterChangeFrequency ?? 7;
     waterVolume = p?.waterVolume ?? 1.0;
     fertilizerType = p?.fertilizerType ?? '液態肥';
@@ -240,22 +243,18 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  initialValue: lightIntensity.toString(),
+                DropdownButtonFormField<String>(
+                  value: _lightIntensityLevel,
                   decoration: const InputDecoration(
                     labelText: '光照強度',
                     prefixIcon: Icon(Icons.light_mode),
-                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    border: UnderlineInputBorder(),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey, width: 1),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.green, width: 2),
-                    ),
                   ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => lightIntensity = double.tryParse(v) ?? 1000,
+                  items: const [
+                    DropdownMenuItem(value: '強光', child: Text('強光')),
+                    DropdownMenuItem(value: '中光', child: Text('中光')),
+                    DropdownMenuItem(value: '弱光', child: Text('弱光')),
+                  ],
+                  onChanged: (v) => setState(() => _lightIntensityLevel = v!),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -390,25 +389,40 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                       backgroundColor: Colors.teal[700],
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        Navigator.pop(
-                            context,
-                            AlgaeProfile(
-                              species: species,
-                              name: name,
-                              ageDays: ageDays,
-                              length: length,
-                              width: width,
-                              waterSource: waterSource,
-                              lightType: lightType,
-                              lightTypeDescription: lightType == '其他' ? lightTypeDescription : null,
-                              lightIntensity: lightIntensity,
-                              waterChangeFrequency: waterChangeFrequency,
-                              waterVolume: waterVolume,
-                              fertilizerType: fertilizerType,
-                              fertilizerDescription: fertilizerType == '自製肥料' ? fertilizerDescription : null,
-                            ));
+                        try {
+                          print('準備寫入資料庫');
+                          final profile = AlgaeProfile(
+                            species: species,
+                            name: name,
+                            ageDays: ageDays,
+                            length: length,
+                            width: width,
+                            waterSource: waterSource,
+                            lightType: lightType,
+                            lightTypeDescription: lightType == '其他' ? lightTypeDescription : null,
+                            // 儲存時存 _lightIntensityLevel
+                            lightIntensityLevel: _lightIntensityLevel,
+                            waterChangeFrequency: waterChangeFrequency,
+                            waterVolume: waterVolume,
+                            fertilizerType: fertilizerType,
+                            fertilizerDescription: fertilizerType == '自製肥料' ? fertilizerDescription : null,
+                          );
+                          await DatabaseService.instance.createProfile(profile);
+                          print('寫入完成，準備 pop');
+                          if (mounted) {
+                            Navigator.pop(context);
+                          }
+                        } catch (e, s) {
+                          print('寫入 profile 發生錯誤: $e');
+                          print(s);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('儲存失敗: $e')),
+                            );
+                          }
+                        }
                       }
                     },
                   ),

@@ -4,7 +4,7 @@ class AlgaeLog {
   final String waterColor;
   final double temperature;
   final double pH;
-  final int lightHours;
+  final double lightHours;
   final String? photoPath;
   final String? notes;
   final String? type;
@@ -48,7 +48,7 @@ class AlgaeLog {
       waterColor: map['waterColor'],
       temperature: map['temperature'],
       pH: map['pH'],
-      lightHours: map['lightHours'],
+      lightHours: map['lightHours'] is int ? (map['lightHours'] as int).toDouble() : map['lightHours'] as double,
       photoPath: map['photoPath'],
       notes: map['notes'],
       type: map['type'],
@@ -63,7 +63,7 @@ class AlgaeLog {
     String? waterColor,
     double? temperature,
     double? pH,
-    int? lightHours,
+    double? lightHours,
     String? photoPath,
     String? notes,
     String? type,

@@ -105,7 +105,7 @@ class _AlgaeProfileListPageState extends State<AlgaeProfileListPage> {
                           Text('寬：${profile.width} cm'),
                           Text('水源：${profile.waterSource}'),
                           Text('光源種類：${profile.lightType}' + (profile.lightType == '其他' && (profile.lightTypeDescription?.isNotEmpty ?? false) ? '（${profile.lightTypeDescription}）' : '')),
-                          Text('光照強度：${profile.lightIntensity}'),
+                          Text('光照強度：${profile.lightIntensityLevel ?? ''}'),
                           Text('換水頻率：${profile.waterChangeFrequency} 天'),
                           Text('水體體積：${profile.waterVolume} 公升'),
                           Text('肥料種類：${profile.fertilizerType}' + (profile.fertilizerType == '自製肥料' && (profile.fertilizerDescription?.isNotEmpty ?? false) ? '（${profile.fertilizerDescription}）' : '')),
@@ -121,15 +121,13 @@ class _AlgaeProfileListPageState extends State<AlgaeProfileListPage> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onPressed: () async {
-                                  final result = await Navigator.push(
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => AlgaeProfileEditPage(profile: profile),
                                     ),
                                   );
-                                  if (result != null && result is AlgaeProfile) {
-                                    await _loadProfiles();
-                                  }
+                                  await _loadProfiles(); // 無論 result 為何都刷新
                                 },
                               ),
                               const SizedBox(width: 16),
@@ -154,15 +152,13 @@ class _AlgaeProfileListPageState extends State<AlgaeProfileListPage> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () async {
-          final result = await Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => AlgaeProfileEditPage(),
             ),
           );
-          if (result != null && result is AlgaeProfile) {
-            await _loadProfiles();
-          }
+          await _loadProfiles(); // 無論 result 為何都刷新
         },
       ),
     );
