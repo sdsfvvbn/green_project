@@ -1,35 +1,45 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class GrowthChartWidget extends StatelessWidget {
   final List<double> data;
-
   const GrowthChartWidget({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        DropdownButton<String>(
-          value: selectedSpecies,
-          items: ['綠藻', '小球藻', '不知道是什麼藻類'].map((e) => DropdownMenuItem(
-            value: e,
-            child: Text(e),
-          )).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedSpecies = value;
-              // TODO：這裡可以加入依品種更新 chart 資料的邏輯
-            });
-          },
+    if (data.isEmpty) {
+      return Center(
+        child: Text(
+          '暫無成長數據',
+          style: const TextStyle(fontSize: 18, color: Colors.green),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '選擇的品種：${selectedSpecies ?? "未選擇"}',
-          style: const TextStyle(fontSize: 16),
+      );
+    }
+    return LineChart(
+      LineChartData(
+        lineBarsData: [
+          LineChartBarData(
+            spots: [
+              for (int i = 0; i < data.length; i++)
+                FlSpot(i.toDouble(), data[i]),
+            ],
+            isCurved: true,
+            barWidth: 3,
+            color: Colors.green,
+            dotData: FlDotData(show: false),
+          ),
+        ],
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: true),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: true),
+          ),
         ),
-        // TODO：加入 chart 視覺化呈現
-      ],
+        borderData: FlBorderData(show: false),
+        gridData: FlGridData(show: false),
+      ),
     );
   }
 }
