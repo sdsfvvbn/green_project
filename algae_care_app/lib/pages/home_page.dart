@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'carbon_chart_widget.dart';
 import 'share_wall_page.dart';
 import 'quiz_game_page.dart';
+import 'algae_profile_list_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -189,6 +190,23 @@ class _HomePageState extends State<HomePage> {
                   subtitle: Text('查看與管理你的微藻養殖日誌'),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
                   onTap: () => Navigator.pushNamed(context, '/logList'),
+                  hoverColor: Colors.green[50],
+                ),
+              ),
+              // 新增 Profile 管理卡片
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                child: ListTile(
+                  leading: Icon(Icons.group_work, color: Colors.green[700], size: 32),
+                  title: Text('我的微藻', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  subtitle: Text('建立、編輯與管理你的藻類資料'),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AlgaeProfileListPage()),
+                  ),
                   hoverColor: Colors.green[50],
                 ),
               ),

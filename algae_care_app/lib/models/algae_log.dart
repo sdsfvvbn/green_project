@@ -4,14 +4,12 @@ class AlgaeLog {
   final String waterColor;
   final double temperature;
   final double pH;
-  final int lightHours;
+  final double lightHours;
   final String? photoPath;
-  final List<String>? photoPaths;
   final String? notes;
   final String? type;
   final bool isWaterChanged;
   final DateTime? nextWaterChangeDate;
-  final List<String>? actions;
 
   AlgaeLog({
     this.id,
@@ -21,12 +19,10 @@ class AlgaeLog {
     required this.pH,
     required this.lightHours,
     this.photoPath,
-    this.photoPaths,
     this.notes,
     this.type,
     this.isWaterChanged = false,
     this.nextWaterChangeDate,
-    this.actions,
   });
 
   Map<String, dynamic> toMap() {
@@ -38,12 +34,10 @@ class AlgaeLog {
       'pH': pH,
       'lightHours': lightHours,
       'photoPath': photoPath,
-      'photoPaths': photoPaths?.join(','),
       'notes': notes,
       'type': type,
       'isWaterChanged': isWaterChanged ? 1 : 0,
       'nextWaterChangeDate': nextWaterChangeDate?.toIso8601String(),
-      'actions': actions?.join(','),
     };
   }
 
@@ -54,14 +48,12 @@ class AlgaeLog {
       waterColor: map['waterColor'],
       temperature: map['temperature'],
       pH: map['pH'],
-      lightHours: map['lightHours'],
+      lightHours: map['lightHours'] is int ? (map['lightHours'] as int).toDouble() : map['lightHours'] as double,
       photoPath: map['photoPath'],
-      photoPaths: map['photoPaths'] != null && map['photoPaths'] != '' ? (map['photoPaths'] as String).split(',') : null,
       notes: map['notes'],
       type: map['type'],
       isWaterChanged: (map['isWaterChanged'] ?? 0) == 1,
       nextWaterChangeDate: map['nextWaterChangeDate'] != null ? DateTime.parse(map['nextWaterChangeDate']) : null,
-      actions: map['actions'] != null && map['actions'] != '' ? (map['actions'] as String).split(',') : null,
     );
   }
 
@@ -71,14 +63,12 @@ class AlgaeLog {
     String? waterColor,
     double? temperature,
     double? pH,
-    int? lightHours,
+    double? lightHours,
     String? photoPath,
-    List<String>? photoPaths,
     String? notes,
     String? type,
     bool? isWaterChanged,
     DateTime? nextWaterChangeDate,
-    List<String>? actions,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -88,12 +78,10 @@ class AlgaeLog {
       pH: pH ?? this.pH,
       lightHours: lightHours ?? this.lightHours,
       photoPath: photoPath ?? this.photoPath,
-      photoPaths: photoPaths ?? this.photoPaths,
       notes: notes ?? this.notes,
       type: type ?? this.type,
       isWaterChanged: isWaterChanged ?? this.isWaterChanged,
       nextWaterChangeDate: nextWaterChangeDate ?? this.nextWaterChangeDate,
-      actions: actions ?? this.actions,
     );
   }
 } 

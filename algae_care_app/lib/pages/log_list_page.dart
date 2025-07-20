@@ -4,8 +4,7 @@ import '../models/algae_log.dart';
 import '../services/database_service.dart';
 import 'log_form_page.dart';
 import 'dart:io';
-// ignore: uri_does_not_exist
-import 'dart:html' as html; // 只會在 web 端有效
+import 'image_picker_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -267,7 +266,6 @@ class _LogListPageState extends State<LogListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Icon(Icons.calendar_today, color: Colors.green[700], size: 20),
                               Text(weekDay, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16)),
                               Text(day, style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 32)),
                             ],
@@ -279,25 +277,46 @@ class _LogListPageState extends State<LogListPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Icon(Icons.water_drop, color: Colors.blue[400], size: 18),
-                                  Text('水色：${log.waterColor}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.grass, color: Colors.green[400], size: 18),
-                                  Text('種類：${log.type ?? ''}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
-                                  Text('溫度：${log.temperature}°C'),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Icon(Icons.science, color: Colors.purple[400], size: 18),
-                                  Text('pH：${log.pH}'),
-                                  const SizedBox(width: 12),
-                                  Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
-                                  Text('光照：${log.lightHours}'),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.water_drop, color: Colors.blue[400], size: 18),
+                                      Text('水色：${log.waterColor}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.grass, color: Colors.green[400], size: 18),
+                                      Text('種類：${log.type ?? ''}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
+                                      Text('溫度：${log.temperature}°C'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.science, color: Colors.purple[400], size: 18),
+                                      Text('pH：${log.pH}'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
+                                      Text('光照：${log.lightHours}'),
+                                    ],
+                                  ),
                                   if (log.isWaterChanged)
                                     Container(
                                       margin: const EdgeInsets.only(left: 8),
@@ -641,22 +660,12 @@ class _MockLogFormState extends State<_MockLogForm> {
   }
 
   Future<void> _pickWebImage() async {
-    // ignore: undefined_prefixed_name
-    final uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = 'image/*';
-    uploadInput.click();
-    uploadInput.onChange.listen((event) {
-      final file = uploadInput.files?.first;
-      if (file != null) {
-        final reader = html.FileReader();
-        reader.readAsDataUrl(file);
-        reader.onLoadEnd.listen((event) {
-          setState(() {
-            _photoDataUrl = reader.result as String;
-          });
-        });
-      }
-    });
+    final imageDataUrl = await pickImage();
+    if (imageDataUrl != null) {
+      setState(() {
+        _photoDataUrl = imageDataUrl;
+      });
+    }
   }
 
   @override
@@ -922,7 +931,7 @@ class _MockLogFormState extends State<_MockLogForm> {
                 waterColor: _waterColor == '其他' ? _customWaterColor ?? '' : _waterColor ?? '',
                 temperature: double.tryParse(_temperature) ?? 0,
                 pH: _phValue ?? 0,
-                lightHours: int.tryParse(_light) ?? 0,
+                lightHours: double.tryParse(_light) ?? 0,
                 photoPath: _photoDataUrl,
                 notes: _notes,
                 type: _type == '其他' ? _customType : _type,
