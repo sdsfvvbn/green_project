@@ -15,6 +15,7 @@ class _GrowthChartWidgetState extends State<GrowthChartWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButton<String>(
@@ -30,33 +31,52 @@ class _GrowthChartWidgetState extends State<GrowthChartWidget> {
             });
           },
         ),
-      );
-    }
-    return LineChart(
-      LineChartData(
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              for (int i = 0; i < data.length; i++)
-                FlSpot(i.toDouble(), data[i]),
-            ],
-            isCurved: true,
-            barWidth: 3,
-            color: Colors.green,
-            dotData: FlDotData(show: false),
-          ),
-        ],
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
+        const SizedBox(height: 16),
+        Flexible(
+          child: SizedBox(
+            height: 260,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: false),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: true),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: true),
+                minX: 0,
+                maxX: widget.data.isNotEmpty ? widget.data.length - 1 : 0,
+                minY: 0,
+                maxY: widget.data.isNotEmpty ? (widget.data.reduce((a, b) => a > b ? a : b) * 1.1) : 1,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: [
+                      for (int i = 0; i < widget.data.length; i++)
+                        FlSpot(i.toDouble(), widget.data[i]),
+                    ],
+                    isCurved: true,
+                    barWidth: 3,
+                    color: Colors.green,
+                    dotData: FlDotData(show: false),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        borderData: FlBorderData(show: false),
-        gridData: FlGridData(show: false),
-      ),
+      ],
     );
   }
 }
