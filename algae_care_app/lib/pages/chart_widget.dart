@@ -30,33 +30,37 @@ class _GrowthChartWidgetState extends State<GrowthChartWidget> {
             });
           },
         ),
-      );
-    }
-    return LineChart(
-      LineChartData(
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              for (int i = 0; i < data.length; i++)
-                FlSpot(i.toDouble(), data[i]),
-            ],
-            isCurved: true,
-            barWidth: 3,
-            color: Colors.green,
-            dotData: FlDotData(show: false),
-          ),
-        ],
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: LineChart(
+            LineChartData(
+              lineBarsData: [
+                LineChartBarData(
+                  spots: [
+                    for (int i = 0; i < widget.data.length; i++)
+                      FlSpot(i.toDouble(), widget.data[i]),
+                  ],
+                  isCurved: true,
+                  barWidth: 3,
+                  color: Colors.green,
+                  dotData: FlDotData(show: false),
+                ),
+              ],
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: true),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(show: false),
+            ),
           ),
         ),
-        borderData: FlBorderData(show: false),
-        gridData: FlGridData(show: false),
-      ),
+      ],
     );
   }
 }

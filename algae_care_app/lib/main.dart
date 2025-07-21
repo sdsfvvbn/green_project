@@ -46,6 +46,7 @@ class MyApp extends StatelessWidget {
       builder: (context, fontSizeNotifier, child) {
         return MaterialApp(
           title: '微藻養殖APP',
+          debugShowCheckedModeBanner: false,
           theme: ThemeData(
             fontFamily: 'NotoSansTC',
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, primary: Colors.green),
