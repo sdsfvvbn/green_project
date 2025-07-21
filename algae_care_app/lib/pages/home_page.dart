@@ -15,6 +15,7 @@ import 'carbon_chart_widget.dart';
 import 'share_wall_page.dart';
 import 'quiz_game_page.dart';
 import 'algae_profile_list_page.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -98,7 +99,10 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.settings, size: 26),
             tooltip: '設定',
             onPressed: () {
-              Navigator.pushNamed(context, '/settings');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              );
             },
           ),
         ],
@@ -119,15 +123,34 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.eco, color: Colors.green[700], size: 32),
-                  const SizedBox(width: 8),
-                  const Text('歡迎來到微藻養殖APP', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.eco, color: Colors.green[700], size: 32),
+                    const SizedBox(width: 8),
+                    const Text('歡迎來到微藻養殖APP', 
+                      style: TextStyle(
+                        fontSize: 20, 
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1
+                      )
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
-              const Text('推廣個人化微藻養殖，讓每個人都能輕鬆減碳、愛地球！', style: TextStyle(color: Colors.teal)),
+              Center(
+                child: Text(
+                  '推廣個人化微藻養殖，讓每個人都能輕鬆減碳、愛地球！', 
+                  style: TextStyle(
+                    color: Colors.teal,
+                    fontSize: 16,
+                    letterSpacing: 0.5
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               const SizedBox(height: 24),
               Card(
                 color: Colors.green[50],

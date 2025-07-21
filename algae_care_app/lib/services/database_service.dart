@@ -43,7 +43,9 @@ class DatabaseService {
         notes TEXT,
         type TEXT,
         isWaterChanged INTEGER DEFAULT 0,
-        nextWaterChangeDate TEXT
+        nextWaterChangeDate TEXT,
+        isFertilized INTEGER DEFAULT 0,
+        nextFertilizeDate TEXT
       )
     ''');
     await db.execute('''
@@ -70,6 +72,18 @@ class DatabaseService {
     if (oldVersion < 2) {
       // Add nextWaterChangeDate column
       await db.execute('ALTER TABLE algae_logs ADD COLUMN nextWaterChangeDate TEXT');
+    }
+    // 若沒有 isFertilized 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN isFertilized INTEGER DEFAULT 0');
+    } catch (e) {
+      print('isFertilized 欄位已存在或新增失敗: $e');
+    }
+    // 若沒有 nextFertilizeDate 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN nextFertilizeDate TEXT');
+    } catch (e) {
+      print('nextFertilizeDate 欄位已存在或新增失敗: $e');
     }
     // 若未來升級時補上 profile 表
     await db.execute('''
@@ -205,5 +219,11 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('algae_logs');
+    await db.delete('algae_profile');
   }
 } 

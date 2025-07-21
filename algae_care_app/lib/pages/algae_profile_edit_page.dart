@@ -162,9 +162,9 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   initialValue: width.toString(),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '藻類寬度（cm）',
-                    prefixIcon: Icon(Icons.straighten),
+                    prefixIcon: Icon(Icons.straighten, color: Colors.green[700]),
                     contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     border: UnderlineInputBorder(),
                     enabledBorder: UnderlineInputBorder(
@@ -173,16 +173,18 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                     focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(color: Colors.green, width: 2),
                     ),
+                    labelStyle: TextStyle(color: Colors.green),
                   ),
+                  style: TextStyle(color: Colors.green[900]),
                   keyboardType: TextInputType.number,
                   onChanged: (v) => width = double.tryParse(v) ?? 1.0,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: waterSource,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '水源',
-                    prefixIcon: Icon(Icons.water_drop),
+                    prefixIcon: Icon(Icons.water_drop, color: Colors.green[700]),
                     contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     border: UnderlineInputBorder(),
                     enabledBorder: UnderlineInputBorder(
@@ -191,7 +193,10 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                     focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(color: Colors.green, width: 2),
                     ),
+                    labelStyle: TextStyle(color: Colors.green),
                   ),
+                  style: TextStyle(color: Colors.green[900]),
+                  dropdownColor: Colors.green[50],
                   items: const [
                     DropdownMenuItem(value: '自來水', child: Text('自來水')),
                     DropdownMenuItem(value: '雨水', child: Text('雨水')),
@@ -394,6 +399,7 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                         try {
                           print('準備寫入資料庫');
                           final profile = AlgaeProfile(
+                            id: widget.profile?.id, // 編輯時帶入 id
                             species: species,
                             name: name,
                             ageDays: ageDays,
@@ -402,14 +408,17 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                             waterSource: waterSource,
                             lightType: lightType,
                             lightTypeDescription: lightType == '其他' ? lightTypeDescription : null,
-                            // 儲存時存 _lightIntensityLevel
                             lightIntensityLevel: _lightIntensityLevel,
                             waterChangeFrequency: waterChangeFrequency,
                             waterVolume: waterVolume,
                             fertilizerType: fertilizerType,
                             fertilizerDescription: fertilizerType == '自製肥料' ? fertilizerDescription : null,
                           );
-                          await DatabaseService.instance.createProfile(profile);
+                          if (widget.profile?.id != null) {
+                            await DatabaseService.instance.updateProfile(profile);
+                          } else {
+                            await DatabaseService.instance.createProfile(profile);
+                          }
                           print('寫入完成，準備 pop');
                           if (mounted) {
                             Navigator.pop(context);
