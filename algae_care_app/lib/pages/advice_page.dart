@@ -30,6 +30,7 @@ class _AdvicePageState extends State<AdvicePage> {
   Future<void> _loadData() async {
     // 從資料庫取得所有日誌
     final logs = await db.DatabaseService.instance.getAllLogs();
+    print('取得日誌資料: $logs'); // 這一行會把日誌資料印出來
     // 取得所有品種（type）
     final types = logs.map((e) => e.type ?? '未知品種').toSet().toList();
     setState(() {
@@ -127,6 +128,42 @@ class _AdvicePageState extends State<AdvicePage> {
                   ),
                 ),
               ),
+              // 新增：自訂填空格與送出按鈕
+              const SizedBox(height: 16),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _CustomAdviceInput(
+                    onSubmit: (species, environment, problem) async {
+                      // 新增：組合日誌資料
+                      String prompt = '以下是我的海藻日誌資料：\n';
+                      for (var log in _allLogs) {
+                        prompt += '日期: ${log.date}, 溫度: ${log.temperature}, 水色: ${log.waterColor}, 品種: ${log.type}\n';
+                      }
+                      prompt += '\n另外，這是我的補充資料：\n';
+                      prompt += '品種: $species\n';
+                      prompt += '養殖環境: $environment\n';
+                      prompt += '遇到的問題: $problem\n';
+                      prompt += '請根據所有資料給我一個養殖建議。';
+                      final model = GenerativeModel(
+                        model: 'gemini-1.5-flash',
+                        apiKey: 'AIzaSyCVMw2sPOKUga72FlhBlaN4ekd4EFqvN-0',
+                      );
+                      setState(() {
+                        _advice = 'AI 正在分析您的補充資料...';
+                      });
+                      final response = await model.generateContent([Content.text(prompt)]);
+                      setState(() {
+                        _advice = response.text ?? '無法取得建議';
+                      });
+                    },
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               Card(
                 elevation: 4,
@@ -185,6 +222,70 @@ class _AdvicePageState extends State<AdvicePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// 新增：自訂填空格元件
+class _CustomAdviceInput extends StatefulWidget {
+  final Future<void> Function(String species, String environment, String problem) onSubmit;
+  const _CustomAdviceInput({required this.onSubmit});
+
+  @override
+  State<_CustomAdviceInput> createState() => _CustomAdviceInputState();
+}
+
+class _CustomAdviceInputState extends State<_CustomAdviceInput> {
+  String? _species;
+  final TextEditingController _environmentController = TextEditingController();
+  final TextEditingController _problemController = TextEditingController();
+  bool _loading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButton<String>(
+          value: _species,
+          hint: const Text('請選擇品種'),
+          items: ['綠藻', '小球藻', '藍綠色', '其他'].map((e) => DropdownMenuItem(
+            value: e,
+            child: Text(e),
+          )).toList(),
+          onChanged: (value) {
+            setState(() {
+              _species = value;
+            });
+          },
+        ),
+        TextField(
+          controller: _environmentController,
+          decoration: const InputDecoration(labelText: '養殖環境（例如水溫、鹽度等）'),
+        ),
+        TextField(
+          controller: _problemController,
+          decoration: const InputDecoration(labelText: '遇到的問題（例如生長不良、病蟲害等）'),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _loading
+                ? null
+                : () async {
+                    setState(() => _loading = true);
+                    await widget.onSubmit(
+                      _species ?? '',
+                      _environmentController.text,
+                      _problemController.text,
+                    );
+                    setState(() => _loading = false);
+                  },
+            child: _loading ? const CircularProgressIndicator() : const Text('送出'),
+          ),
+        ),
+      ],
     );
   }
 }
