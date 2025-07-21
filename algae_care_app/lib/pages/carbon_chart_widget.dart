@@ -1,25 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/algae_log.dart';
+import '../models/algae_profile.dart';
+import '../services/database_service.dart';
 
-class CarbonChartWidget extends StatelessWidget {
+class CarbonChartWidget extends StatefulWidget {
   final List<AlgaeLog> logs;
-  final double algaeVolume;
-  const CarbonChartWidget({super.key, required this.logs, required this.algaeVolume});
+  final ValueChanged<double>? onTotalChanged;
+  const CarbonChartWidget({super.key, required this.logs, this.onTotalChanged});
+
+  @override
+  State<CarbonChartWidget> createState() => _CarbonChartWidgetState();
+}
+
+class _CarbonChartWidgetState extends State<CarbonChartWidget> {
+  List<AlgaeProfile> _profiles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await DatabaseService.instance.getAllProfiles();
+    setState(() {
+      _profiles = profiles;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (logs.isEmpty) {
+    if (widget.logs.isEmpty) {
       return const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'));
     }
     // 依日期排序
-    final sortedLogs = List<AlgaeLog>.from(logs)..sort((a, b) => a.date.compareTo(b.date));
+    final sortedLogs = List<AlgaeLog>.from(widget.logs)..sort((a, b) => a.date.compareTo(b.date));
     // 以日期為key，計算每日累積吸碳量
     final Map<String, double> dailyCumulative = {};
     double total = 0;
     for (var log in sortedLogs) {
-      // 單日吸碳量 = 體積 * 2g / 365
-      final dayCO2 = algaeVolume * 2 / 365;
+      // 根據 log.type 去 profile 找體積
+      final profile = _profiles.firstWhere(
+        (p) => p.species == (log.type ?? ''),
+        orElse: () => AlgaeProfile(
+          id: null,
+          species: log.type ?? '',
+          name: null,
+          startDate: DateTime(2020, 1, 1),
+          length: 1.0,
+          width: 1.0,
+          waterSource: '',
+          lightType: '',
+          waterChangeFrequency: 7,
+          waterVolume: 1.0,
+          fertilizerType: '',
+        ),
+      );
+      final dayCO2 = profile.waterVolume * 2 / 365;
       total += dayCO2;
       final key = "${log.date.year}-${log.date.month}-${log.date.day}";
       dailyCumulative[key] = total;
@@ -30,11 +68,13 @@ class CarbonChartWidget extends StatelessWidget {
       spots.add(FlSpot(i.toDouble(), entry.value));
       i++;
     }
-
-    // 計算 Y 軸的最大值和刻度間隔
+    if (widget.onTotalChanged != null && spots.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onTotalChanged!(spots.last.y);
+      });
+    }
     final maxY = spots.isNotEmpty ? (spots.map((e) => e.y).reduce((a, b) => a > b ? a : b) * 1.1) : 1.0;
     final interval = _calculateInterval(maxY);
-
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 16),
       elevation: 4,

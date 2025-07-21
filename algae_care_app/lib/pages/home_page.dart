@@ -9,7 +9,6 @@ import 'advice_page.dart';
 import 'achievement_page.dart';
 import 'knowledge_page.dart';
 import 'share_page.dart';
-import 'algae_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'carbon_chart_widget.dart';
 import 'share_wall_page.dart';
@@ -29,8 +28,14 @@ class _HomePageState extends State<HomePage> {
   List<AlgaeLog> _logs = [];
   double _algaeVolume = 1.0;
   int _logDays = 1;
-  double get _monthCO2 => _algaeVolume * 2 / 12;
-  double get _totalCO2 => _algaeVolume * 2 * _logDays / 365;
+  double get _monthCO2 {
+    final now = DateTime.now();
+    final thisMonthLogs = _logs.where((log) =>
+      log.date.year == now.year && log.date.month == now.month
+    );
+    return thisMonthLogs.length * _algaeVolume * 2 / 365;
+  }
+  double _chartTotalCO2 = 0.0;
   final List<String> facts = [
     '微藻一年可吸收自身重量10倍的二氧化碳。',
     '螺旋藻是最常見的可食用微藻之一。',
@@ -69,6 +74,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadLogs() async {
     final logs = await _databaseService.getAllLogs();
+    for (var log in logs) {
+      print('log.date: ${log.date}');
+    }
     setState(() {
       _logs = logs;
     });
@@ -172,35 +180,29 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           const Text('累積吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                          Text('${_totalCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
+                          Text('${_chartTotalCO2.toStringAsFixed(2)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
                         ],
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.water_drop, color: Colors.white),
-                  label: const Text('編輯微藻養殖設定', style: TextStyle(color: Colors.white, fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal[700],
-                    minimumSize: const Size(220, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () async {
-                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AlgaeSettingsPage()));
-                    _loadAlgaeSettings();
-                  },
-                ),
-              ),
+              
               // 吸碳量折線圖
               (_logs.isEmpty && _logs != null)
                 ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
                 : (_logs.isEmpty
                     ? const Center(child: CircularProgressIndicator())
-                    : CarbonChartWidget(logs: _logs, algaeVolume: _algaeVolume)),
+                    : CarbonChartWidget(
+                        logs: _logs, 
+                        onTotalChanged: (val) {
+                          if (_chartTotalCO2 != val) {
+                            setState(() {
+                              _chartTotalCO2 = val;
+                            });
+                          }
+                        },
+                      )),
               const SizedBox(height: 32),
               // 假設有主要功能卡片或列表
               Card(

@@ -53,7 +53,7 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         species TEXT NOT NULL,
         name TEXT,
-        ageDays INTEGER NOT NULL,
+        startDate TEXT NOT NULL,
         length REAL NOT NULL,
         width REAL NOT NULL,
         waterSource TEXT NOT NULL,
@@ -91,19 +91,25 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         species TEXT NOT NULL,
         name TEXT,
-        ageDays INTEGER NOT NULL,
+        startDate TEXT NOT NULL,
         length REAL NOT NULL,
         width REAL NOT NULL,
         waterSource TEXT NOT NULL,
         lightType TEXT NOT NULL,
         lightTypeDescription TEXT,
-        lightIntensity REAL NOT NULL,
+        lightIntensityLevel TEXT,
         waterChangeFrequency INTEGER NOT NULL,
         waterVolume REAL NOT NULL,
         fertilizerType TEXT NOT NULL,
         fertilizerDescription TEXT
       )
     ''');
+    // 若沒有 startDate 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_profile ADD COLUMN startDate TEXT');
+    } catch (e) {
+      print('startDate 欄位已存在或新增失敗: $e');
+    }
   }
 
   Future<int> createLog(AlgaeLog log) async {

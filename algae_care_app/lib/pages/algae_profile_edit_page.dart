@@ -17,7 +17,7 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
   final _formKey = GlobalKey<FormState>();
   late String species;
   String? name;
-  late int ageDays;
+  late DateTime startDate;
   late double length;
   late double width;
   late String waterSource;
@@ -37,7 +37,7 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
     final p = widget.profile;
     species = p?.species ?? '綠藻';
     name = p?.name;
-    ageDays = p?.ageDays ?? 1;
+    startDate = p?.startDate ?? DateTime.now();
     length = p?.length ?? 1.0;
     width = p?.width ?? 1.0;
     waterSource = p?.waterSource ?? '自來水';
@@ -124,59 +124,36 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                 onChanged: (v) => name = v,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                initialValue: ageDays.toString(),
-                decoration: const InputDecoration(
-                  labelText: '養了幾天',
-                  prefixIcon: Icon(Icons.calendar_today),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
+              // 新增開始養殖日期選擇器
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: Colors.teal),
+                  const SizedBox(width: 8),
+                  const Text('開始養殖日期：', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Text('${startDate.year}/${startDate.month}/${startDate.day}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: startDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          startDate = picked;
+                        });
+                      }
+                    },
+                    child: const Text('選擇日期'),
                   ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (v) => ageDays = int.tryParse(v) ?? 1,
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: length.toString(),
-                decoration: const InputDecoration(
-                  labelText: '藻類長度（cm）',
-                  prefixIcon: Icon(Icons.straighten),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (v) => length = double.tryParse(v) ?? 1.0,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: width.toString(),
-                decoration: const InputDecoration(
-                  labelText: '藻類寬度（cm）',
-                  prefixIcon: Icon(Icons.straighten),
-                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.green, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (v) => width = double.tryParse(v) ?? 1.0,
-              ),
+              const SizedBox(height: 8),
+              // 自動顯示養了幾天
+              Text('養了 ${(DateTime.now().difference(startDate).inDays + 1)} 天', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: waterSource,
@@ -396,7 +373,7 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                           id: widget.profile?.id, // 編輯時帶入 id
                           species: species,
                           name: name,
-                          ageDays: ageDays,
+                          startDate: startDate,
                           length: length,
                           width: width,
                           waterSource: waterSource,

@@ -6,6 +6,7 @@ import 'package:algae_care_app/services/database_service.dart';
 // import 'package:algae_care_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
+import '../models/algae_profile.dart';
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -44,12 +45,23 @@ class _LogFormPageState extends State<LogFormPage> {
   @override
   void initState() {
     super.initState();
+    _loadProfiles();
     if (widget.logId != null) {
       _loadLogData(widget.logId!);
     }
     _phValue = null;
     _type = null;
     _isWaterChanged = false;
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await DatabaseService.instance.getAllProfiles();
+    setState(() {
+      // _profiles = profiles; // 刪除 _profiles 賦值
+      // if (_profiles.isNotEmpty && _selectedProfileId == null) { // 刪除 _profiles 相關邏輯
+      //   _selectedProfileId = _profiles.first.id;
+      // }
+    });
   }
 
   Future<void> _loadLogData(int logId) async {
@@ -69,6 +81,7 @@ class _LogFormPageState extends State<LogFormPage> {
         _isFertilized = log.isFertilized;
         _nextWaterChangeDate = log.nextWaterChangeDate;
         _nextFertilizeDate = log.nextFertilizeDate;
+        // _selectedProfileId = log.profileId; // 刪除 profileId 賦值
         if (log.photoPath != null && log.photoPath!.isNotEmpty) {
           _image = File(log.photoPath!);
         }
@@ -145,6 +158,11 @@ class _LogFormPageState extends State<LogFormPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // 新增：選擇微藻 profile
+              // 刪除 _profiles.isNotEmpty 判斷
+              // 刪除 DropdownButtonFormField<int> 所屬微藻下拉選單
+              // 刪除 _profiles.isEmpty 判斷
+              // 刪除 const Text('請先建立微藻資料', style: TextStyle(color: Colors.red))
               ListTile(
                 title: Text(
                   '日期：${_selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : ''}',
@@ -605,6 +623,7 @@ class _LogFormPageState extends State<LogFormPage> {
                               nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
                               isFertilized: _isFertilized,
                               nextFertilizeDate: _isFertilized ? _nextFertilizeDate : null,
+                              // profileId: _selectedProfileId, // 刪除 profileId 參數
                             );
                             final existLog = await DatabaseService.instance.getLogByDate(log.date);
                             Navigator.of(context).pop(); // 關閉 loading
