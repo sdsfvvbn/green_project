@@ -44,11 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text('意見回饋/報錯'),
             onTap: () => _showFeedbackDialog(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.delete_forever, color: Colors.red),
-            title: Text(loc.get('clear_data'), style: const TextStyle(color: Colors.red)),
-            onTap: () => _showClearDataDialog(context),
-          ),
+          // 已移除一鍵清除所有資料功能
         ],
       ),
     );
@@ -98,32 +94,19 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showFeedbackDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('意見回饋/報錯'),
-        content: const Text('如果你有任何建議或遇到問題，歡迎來信反饋！'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('關閉')),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.email),
-            label: const Text('Email 反饋'),
-            onPressed: () async {
-              final uri = Uri(
-                scheme: 'mailto',
-                path: 'algaecaring2025@gmail.com',
-                query: 'subject=微藻養殖APP意見回饋',
-              );
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
-              Navigator.pop(ctx);
-            },
-          ),
-        ],
-      ),
+  void _showFeedbackDialog(BuildContext context) async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'algaecare@gmail.com', // 請改成你的 email
+      query: 'subject=意見回饋&body=請輸入您的建議...',
     );
+    if (await canLaunchUrl(emailLaunchUri)) {
+      await launchUrl(emailLaunchUri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('無法開啟 email app')),
+      );
+    }
   }
 
   void _showAboutDialog(BuildContext context) {
@@ -131,32 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       applicationName: '微藻養殖APP',
       applicationVersion: 'v1.0.0',
-      applicationLegalese: '開發者：你的名字\n聯絡信箱：your@email.com',
-    );
-  }
-
-  void _showClearDataDialog(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(loc.get('clear_data')),
-        content: Text(loc.get('clear_data_confirm')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(loc.get('cancel'))),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              await DatabaseService.instance.clearAllData();
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('資料已清除')),
-              );
-            },
-            child: Text(loc.get('confirm')),
-          ),
-        ],
-      ),
+      applicationLegalese: '開發者：algaecare@gmail.com',
     );
   }
 } 

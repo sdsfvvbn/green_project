@@ -12,6 +12,7 @@ class AlgaeLog {
   final DateTime? nextWaterChangeDate;
   final bool isFertilized;
   final DateTime? nextFertilizeDate;
+  final double? waterVolume;
 
   AlgaeLog({
     this.id,
@@ -27,6 +28,7 @@ class AlgaeLog {
     this.nextWaterChangeDate,
     this.isFertilized = false,
     this.nextFertilizeDate,
+    this.waterVolume,
   });
 
   Map<String, dynamic> toMap() {
@@ -44,6 +46,7 @@ class AlgaeLog {
       'nextWaterChangeDate': nextWaterChangeDate?.toIso8601String(),
       'isFertilized': isFertilized ? 1 : 0,
       'nextFertilizeDate': nextFertilizeDate?.toIso8601String(),
+      'waterVolume': waterVolume,
     };
   }
 
@@ -62,6 +65,7 @@ class AlgaeLog {
       nextWaterChangeDate: map['nextWaterChangeDate'] != null ? DateTime.parse(map['nextWaterChangeDate']) : null,
       isFertilized: (map['isFertilized'] ?? 0) == 1,
       nextFertilizeDate: map['nextFertilizeDate'] != null ? DateTime.parse(map['nextFertilizeDate']) : null,
+      waterVolume: map['waterVolume'] != null ? (map['waterVolume'] is int ? (map['waterVolume'] as int).toDouble() : map['waterVolume'] as double) : null,
     );
   }
 
@@ -79,6 +83,7 @@ class AlgaeLog {
     DateTime? nextWaterChangeDate,
     bool? isFertilized,
     DateTime? nextFertilizeDate,
+    double? waterVolume,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -94,6 +99,7 @@ class AlgaeLog {
       nextWaterChangeDate: nextWaterChangeDate ?? this.nextWaterChangeDate,
       isFertilized: isFertilized ?? this.isFertilized,
       nextFertilizeDate: nextFertilizeDate ?? this.nextFertilizeDate,
+      waterVolume: waterVolume ?? this.waterVolume,
     );
   }
 } 

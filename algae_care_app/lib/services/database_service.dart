@@ -20,6 +20,7 @@ class DatabaseService {
     print('Initializing DB...');
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    print('資料庫路徑: $path');
 
     return await openDatabase(
       path,
@@ -45,7 +46,8 @@ class DatabaseService {
         isWaterChanged INTEGER DEFAULT 0,
         nextWaterChangeDate TEXT,
         isFertilized INTEGER DEFAULT 0,
-        nextFertilizeDate TEXT
+        nextFertilizeDate TEXT,
+        waterVolume REAL
       )
     ''');
     await db.execute('''
@@ -85,6 +87,12 @@ class DatabaseService {
     } catch (e) {
       print('nextFertilizeDate 欄位已存在或新增失敗: $e');
     }
+    // 若沒有 waterVolume 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN waterVolume REAL');
+    } catch (e) {
+      print('waterVolume 欄位已存在或新增失敗: $e');
+    }
     // 若未來升級時補上 profile 表
     await db.execute('''
       CREATE TABLE IF NOT EXISTS algae_profile(
@@ -115,7 +123,11 @@ class DatabaseService {
   Future<int> createLog(AlgaeLog log) async {
     print('createLog called with: ${log.toMap()}');
     final db = await database;
-    return await db.insert('algae_logs', log.toMap());
+    final id = await db.insert('algae_logs', log.toMap());
+    print('createLog insert 回傳 id: $id');
+    final all = await db.query('algae_logs');
+    print('createLog 後立即查詢: $all');
+    return id;
   }
 
   Future<List<AlgaeLog>> getAllLogs() async {
