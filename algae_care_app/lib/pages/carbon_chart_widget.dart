@@ -31,42 +31,26 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.logs.isEmpty) {
+    final sortedLogs = List<AlgaeLog>.from(widget.logs)..sort((a, b) => a.date.compareTo(b.date));
+    if (sortedLogs.isEmpty) {
       return const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'));
     }
-    // 依日期排序
-    final sortedLogs = List<AlgaeLog>.from(widget.logs)..sort((a, b) => a.date.compareTo(b.date));
-    // 以日期為key，計算每日累積吸碳量
-    final Map<String, double> dailyCumulative = {};
-    double total = 0;
-    for (var log in sortedLogs) {
-      // 根據 log.type 去 profile 找體積
-      final profile = _profiles.firstWhere(
-        (p) => p.species == (log.type ?? ''),
-        orElse: () => AlgaeProfile(
-          id: null,
-          species: log.type ?? '',
-          name: null,
-          startDate: DateTime(2020, 1, 1),
-          length: 1.0,
-          width: 1.0,
-          waterSource: '',
-          lightType: '',
-          waterChangeFrequency: 7,
-          waterVolume: 1.0,
-          fertilizerType: '',
-        ),
-      );
-      final dayCO2 = profile.waterVolume * 2 / 365;
-      total += dayCO2;
-      final key = "${log.date.year}-${log.date.month}-${log.date.day}";
-      dailyCumulative[key] = total;
-    }
+    final firstDate = DateTime(sortedLogs.first.date.year, sortedLogs.first.date.month, sortedLogs.first.date.day);
+    final now = DateTime.now();
+    final days = now.difference(firstDate).inDays + 1;
+    final List<DateTime> allDays = List.generate(days, (i) => firstDate.add(Duration(days: i)));
+    double total = 0.0;
     final spots = <FlSpot>[];
-    int i = 0;
-    for (var entry in dailyCumulative.entries) {
-      spots.add(FlSpot(i.toDouble(), entry.value));
-      i++;
+    int logIdx = 0;
+    for (int i = 0; i < allDays.length; i++) {
+      final day = allDays[i];
+      while (logIdx + 1 < sortedLogs.length && !sortedLogs[logIdx + 1].date.isAfter(day)) {
+        logIdx++;
+      }
+      final log = sortedLogs[logIdx];
+      final dayCO2 = (log.waterVolume ?? 1.0) * 2 / 365;
+      total += dayCO2;
+      spots.add(FlSpot(i.toDouble(), total));
     }
     if (widget.onTotalChanged != null && spots.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -124,13 +108,13 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
                         showTitles: true,
                         interval: 1,
                         getTitlesWidget: (value, meta) {
-                          if (value.toInt() >= 0 && value.toInt() < dailyCumulative.length) {
-                            final date = dailyCumulative.keys.elementAt(value.toInt());
-                            final day = date.split('-').last;
+                          if (value.toInt() >= 0 && value.toInt() < days) {
+                            final date = firstDate.add(Duration(days: value.toInt()));
+                            final day = date.day;
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Text(
-                                day,
+                                day.toString(),
                                 style: const TextStyle(
                                   color: Colors.grey,
                                   fontSize: 12,

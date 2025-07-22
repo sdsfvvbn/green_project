@@ -25,15 +25,28 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final DatabaseService _databaseService;
-  List<AlgaeLog> _logs = [];
+  List<AlgaeLog>? _logs;
   double _algaeVolume = 1.0;
   int _logDays = 1;
   double get _monthCO2 {
     final now = DateTime.now();
-    final thisMonthLogs = _logs.where((log) =>
-      log.date.year == now.year && log.date.month == now.month
-    );
-    return thisMonthLogs.length * _algaeVolume * 2 / 365;
+    // 如果 _logs 尚未載入，直接回傳 0
+    if (_logs == null) return 0.0;
+    final thisMonthLogs = _logs!
+        .where((log) => log.date.year == now.year && log.date.month == now.month)
+        .toList();
+
+    if (thisMonthLogs.isEmpty) return 0.0;
+
+    // 找出本月最早的 log 日期
+    thisMonthLogs.sort((a, b) => a.date.compareTo(b.date));
+    final firstLogDate = thisMonthLogs.first.date;
+
+    // 算從第一筆 log 到今天的天數（含頭尾）
+    final days = now.difference(DateTime(firstLogDate.year, firstLogDate.month, firstLogDate.day)).inDays + 1;
+
+    // 用天數 × 單日吸碳量
+    return days * _algaeVolume * 2 / 365;
   }
   double _chartTotalCO2 = 0.0;
   final List<String> facts = [
@@ -74,8 +87,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadLogs() async {
     final logs = await _databaseService.getAllLogs();
+    print('getAllLogs 回傳: ${logs.length} 筆');
     for (var log in logs) {
-      print('log.date: ${log.date}');
+      print('log: ${log.toMap()}');
     }
     setState(() {
       _logs = logs;
@@ -172,7 +186,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('本月吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                          Text('${_monthCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text('${_monthCO2.toStringAsFixed(2)} kg', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
                         ],
                       ),
                       const Spacer(),
@@ -189,12 +203,12 @@ class _HomePageState extends State<HomePage> {
               ),
               
               // 吸碳量折線圖
-              (_logs.isEmpty && _logs != null)
-                ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
-                : (_logs.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
+              _logs == null
+                ? const Center(child: CircularProgressIndicator())
+                : _logs!.isEmpty
+                    ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
                     : CarbonChartWidget(
-                        logs: _logs, 
+                        logs: _logs!, 
                         onTotalChanged: (val) {
                           if (_chartTotalCO2 != val) {
                             setState(() {
@@ -202,7 +216,7 @@ class _HomePageState extends State<HomePage> {
                             });
                           }
                         },
-                      )),
+                      ),
               const SizedBox(height: 32),
               // 假設有主要功能卡片或列表
               Card(
@@ -214,7 +228,12 @@ class _HomePageState extends State<HomePage> {
                   title: Text('日誌紀錄', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   subtitle: Text('查看與管理你的微藻養殖日誌'),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
-                  onTap: () => Navigator.pushNamed(context, '/logList'),
+                  onTap: () async {
+                    final result = await Navigator.pushNamed(context, '/logList');
+                    if (result == true) {
+                      _loadLogs();
+                    }
+                  },
                   hoverColor: Colors.green[50],
                 ),
               ),

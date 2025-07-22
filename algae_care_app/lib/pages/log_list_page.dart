@@ -153,73 +153,82 @@ class _LogListPageState extends State<LogListPage> {
         ),
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '日誌紀錄',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-        ),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
-        elevation: 6,
-        centerTitle: true,
-        leading: Icon(Icons.book, size: 28),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_today, size: 26),
-            tooltip: '切換到日曆',
-            onPressed: () {
-              _pageController.animateToPage(
-                1, // 日曆頁在 PageView 的第二頁
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.ease,
-              );
-            },
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(true);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            '日誌紀錄',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
           ),
-        ],
-      ),
-      body: FutureBuilder<List<AlgaeLog>>(
-        future: _logsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('發生錯誤: \\${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('開始記錄'),
-                    onPressed: () => _navigateToForm(),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            final logs = snapshot.data!;
-            return PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
+          backgroundColor: Colors.green[700],
+          foregroundColor: Colors.white,
+          elevation: 6,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.book, size: 28),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.calendar_today, size: 26),
+              tooltip: '切換到日曆',
+              onPressed: () {
+                _pageController.animateToPage(
+                  1, // 日曆頁在 PageView 的第二頁
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                );
               },
-              children: [
-                _buildGroupedList(logs),
-                _buildCalendar(logs),
-              ],
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToForm(),
-        child: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        body: FutureBuilder<List<AlgaeLog>>(
+          future: _logsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('發生錯誤: \\${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('開始記錄'),
+                      onPressed: () => _navigateToForm(),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              final logs = snapshot.data!;
+              return PageView(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                children: [
+                  _buildGroupedList(logs),
+                  _buildCalendar(logs),
+                ],
+              );
+            }
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _navigateToForm(),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

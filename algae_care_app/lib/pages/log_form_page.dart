@@ -35,6 +35,7 @@ class _LogFormPageState extends State<LogFormPage> {
   DateTime? _nextFertilizeDate;
   List<File> _images = []; // 新增：多圖
   List<String> _actions = []; // 新增：多種操作標記
+  List<AlgaeProfile> _profiles = [];
 
   // 1. 新增光照、溫度、pH的狀態變數
   int _lightHour = 0;
@@ -57,10 +58,7 @@ class _LogFormPageState extends State<LogFormPage> {
   Future<void> _loadProfiles() async {
     final profiles = await DatabaseService.instance.getAllProfiles();
     setState(() {
-      // _profiles = profiles; // 刪除 _profiles 賦值
-      // if (_profiles.isNotEmpty && _selectedProfileId == null) { // 刪除 _profiles 相關邏輯
-      //   _selectedProfileId = _profiles.first.id;
-      // }
+      _profiles = profiles;
     });
   }
 
@@ -608,6 +606,25 @@ class _LogFormPageState extends State<LogFormPage> {
                               builder: (context) => const Center(child: CircularProgressIndicator()),
                             );
                             _formKey.currentState!.save();
+                            // 根據 _type 找到對應 profile 的 waterVolume
+                            double? waterVolume;
+                            final profile = _profiles.firstWhere(
+                              (p) => p.species == (_type == '其他' ? _customType : _type),
+                              orElse: () => AlgaeProfile(
+                                id: null,
+                                species: _type == '其他' ? _customType ?? '' : _type ?? '',
+                                name: null,
+                                startDate: DateTime(2020, 1, 1),
+                                length: 1.0,
+                                width: 1.0,
+                                waterSource: '',
+                                lightType: '',
+                                waterChangeFrequency: 7,
+                                waterVolume: 1.0,
+                                fertilizerType: '',
+                              ),
+                            );
+                            waterVolume = profile.waterVolume ?? 1.0;
                             // 儲存時要把這三個欄位的值正確存進 AlgaeLog
                             final log = AlgaeLog(
                               id: widget.logId,
@@ -623,7 +640,7 @@ class _LogFormPageState extends State<LogFormPage> {
                               nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
                               isFertilized: _isFertilized,
                               nextFertilizeDate: _isFertilized ? _nextFertilizeDate : null,
-                              // profileId: _selectedProfileId, // 刪除 profileId 參數
+                              waterVolume: waterVolume,
                             );
                             final existLog = await DatabaseService.instance.getLogByDate(log.date);
                             Navigator.of(context).pop(); // 關閉 loading
