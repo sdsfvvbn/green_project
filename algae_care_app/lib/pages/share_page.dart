@@ -140,101 +140,71 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.share, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Card(
-                  color: Colors.green[50],
-                  elevation: 6,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  margin: const EdgeInsets.only(bottom: 32),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        _imageFile == null
-                            ? Icon(Icons.emoji_nature, color: Colors.green[700], size: 64)
-                            : kIsWeb
-                                ? Icon(Icons.image, size: 64, color: Colors.grey)
-                                : ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Image.file(_imageFile!, width: 140, height: 140, fit: BoxFit.cover),
-                                  ),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.add_a_photo, color: Colors.white),
-                          label: const Text('上傳成果照片', style: TextStyle(color: Colors.white)),
-                          onPressed: _pickImage,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal[400],
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('我的微藻成果', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                        const SizedBox(height: 4),
-                        Text('本月吸碳量：${_monthCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 16, color: Colors.teal)),
-                        Text('累積吸碳量：${_totalCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 16, color: Colors.green)),
-                        Text('已解鎖徽章：$badgeCount 枚', style: const TextStyle(fontSize: 16, color: Colors.orange)),
-                        Text('上傳照片數：$photoCount 張', style: const TextStyle(fontSize: 16, color: Colors.blue)),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.eco, color: Colors.teal, size: 28),
-                            SizedBox(width: 8),
-                            Icon(Icons.calendar_month, color: Colors.blue, size: 28),
-                            SizedBox(width: 8),
-                            Icon(Icons.menu_book, color: Colors.orange, size: 28),
-                            SizedBox(width: 8),
-                            Icon(Icons.emoji_events, color: Colors.amber, size: 28),
-                          ],
-                        ),
-                      ],
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Card(
+                    color: Colors.green[50],
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    margin: const EdgeInsets.only(bottom: 32),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          _imageFile == null
+                              ? Icon(Icons.emoji_nature, color: Colors.green[700], size: 64)
+                              : kIsWeb
+                                  ? Icon(Icons.image, size: 64, color: Colors.grey)
+                                  : Image.file(_imageFile!, width: 64, height: 64, fit: BoxFit.cover),
+                          const SizedBox(height: 16),
+                          Text('已獲得 $badgeCount 枚徽章', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                          const SizedBox(height: 8),
+                          Text('已上傳 $photoCount 張照片', style: const TextStyle(fontSize: 16)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 12,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.chat, color: Colors.white),
-                      label: const Text('分享到 LINE', style: TextStyle(color: Colors.white)),
-                      onPressed: () => _shareToLine(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[600],
-                        minimumSize: const Size(160, 48),
-                        textStyle: const TextStyle(fontSize: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.camera_alt, color: Colors.white),
-                      label: const Text('分享到 IG', style: TextStyle(color: Colors.white)),
-                      onPressed: () => _shareToIG(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple[400],
-                        minimumSize: const Size(160, 48),
-                        textStyle: const TextStyle(fontSize: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                const Text('推廣個人化微藻養殖，讓更多人一起減碳、愛地球！',
-                    style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold)),
-              ],
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.share),
+                    label: const Text('分享到 LINE'),
+                    onPressed: () => _shareToLine(context),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.share),
+                    label: const Text('分享到 IG'),
+                    onPressed: () => _shareToIG(context),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.share),
+                    label: const Text('分享到 Facebook'),
+                    onPressed: () => _shareToFB(context),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.share),
+                    label: const Text('分享到 Twitter'),
+                    onPressed: () => _shareToTwitter(context),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

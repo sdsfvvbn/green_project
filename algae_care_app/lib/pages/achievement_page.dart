@@ -104,102 +104,78 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.emoji_events, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        children: [
-          for (var type in typeNames)
-            if (grouped[type]!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    child: Row(
-                      children: [
-                        Icon(Icons.emoji_events, color: typeColors[type], size: 24),
-                        const SizedBox(width: 8),
-                        Text('$type成就', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: typeColors[type])),
-                      ],
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          children: [
+            for (var type in typeNames)
+              if (grouped[type]!.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.emoji_events, color: typeColors[type], size: 24),
+                          const SizedBox(width: 8),
+                          Text('$type成就', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: typeColors[type])),
+                        ],
+                      ),
                     ),
-                  ),
-                  ...grouped[type]!.map((a) => Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    child: ListTile(
-                      leading: a['unlocked']
-                        ? ScaleTransition(
-                            scale: _scaleAnim,
-                            child: CircleAvatar(
-                              backgroundColor: typeColors[a['type']],
-                              child: Icon(a['icon'], color: Colors.white, size: 28),
+                    ...grouped[type]!.map((a) => Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      child: ListTile(
+                        leading: a['unlocked']
+                          ? ScaleTransition(
+                              scale: _scaleAnim,
+                              child: CircleAvatar(
+                                backgroundColor: typeColors[a['type']],
+                                child: Icon(a['icon'], color: Colors.white, size: 28),
+                              ),
+                            )
+                          : CircleAvatar(
+                              backgroundColor: Colors.grey[300],
+                              child: Icon(a['icon'], color: Colors.grey, size: 28),
                             ),
-                          )
-                        : CircleAvatar(
-                            backgroundColor: Colors.grey[300],
-                            child: Icon(a['icon'], color: Colors.grey, size: 28),
-                          ),
-                      title: Text(a['title'], style: TextStyle(fontWeight: FontWeight.bold, color: a['unlocked'] ? typeColors[a['type']] : Colors.grey)),
-                      subtitle: Text(a['desc']),
-                      trailing: a['unlocked']
-                        ? const Text('已解鎖', style: TextStyle(color: Colors.green))
-                        : const Text('未解鎖', style: TextStyle(color: Colors.grey)),
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            title: Row(
-                              children: [
-                                Icon(a['icon'], color: a['unlocked'] ? typeColors[a['type']] : Colors.grey),
-                                const SizedBox(width: 8),
-                                Text(a['title']),
-                              ],
-                            ),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(a['desc'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 12),
-                                Text('解鎖條件：', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.bold)),
-                                Text(a['detail']),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      a['unlocked'] ? Icons.emoji_events : Icons.lock_outline,
-                                      color: a['unlocked'] ? Colors.amber : Colors.grey,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      a['unlocked'] ? '已解鎖' : '尚未解鎖',
-                                      style: TextStyle(
-                                        color: a['unlocked'] ? Colors.green : Colors.grey,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                        title: Text(a['title'], style: TextStyle(fontWeight: FontWeight.bold, color: a['unlocked'] ? typeColors[a['type']] : Colors.grey)),
+                        subtitle: Text(a['desc']),
+                        trailing: a['unlocked']
+                          ? const Text('已解鎖', style: TextStyle(color: Colors.green))
+                          : const Text('未解鎖', style: TextStyle(color: Colors.grey)),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(a['title']),
+                              content: Text(a['detail']),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('關閉'),
                                 ),
                               ],
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('關閉'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  )),
-                  const SizedBox(height: 8),
-                ],
-              ),
-        ],
+                          );
+                        },
+                      ),
+                    )),
+                  ],
+                ),
+          ],
+        ),
       ),
     );
   }

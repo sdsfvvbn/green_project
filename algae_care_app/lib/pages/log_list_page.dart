@@ -169,7 +169,7 @@ class _LogListPageState extends State<LogListPage> {
           elevation: 6,
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.book, size: 28),
+            icon: const Icon(Icons.arrow_back, size: 28),
             onPressed: () => Navigator.of(context).pop(true),
           ),
           actions: [
@@ -186,44 +186,52 @@ class _LogListPageState extends State<LogListPage> {
             ),
           ],
         ),
-        body: FutureBuilder<List<AlgaeLog>>(
-          future: _logsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('發生錯誤: \\${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text('開始記錄'),
-                      onPressed: () => _navigateToForm(),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              final logs = snapshot.data!;
-              return PageView(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                children: [
-                  _buildGroupedList(logs),
-                  _buildCalendar(logs),
-                ],
-              );
+        body: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.primaryVelocity! > 0) {
+              // 從左往右滑動，返回首頁
+              Navigator.of(context).pop(true);
             }
           },
+          child: FutureBuilder<List<AlgaeLog>>(
+            future: _logsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('發生錯誤: \\${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('開始記錄'),
+                        onPressed: () => _navigateToForm(),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                final logs = snapshot.data!;
+                return PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  children: [
+                    _buildGroupedList(logs),
+                    _buildCalendar(logs),
+                  ],
+                );
+              }
+            },
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _navigateToForm(),

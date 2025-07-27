@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'user_profile_page.dart';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ShareWallPage extends StatefulWidget {
@@ -164,84 +164,84 @@ class _ShareWallPageState extends State<ShareWallPage> {
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.wallpaper, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: ListView.builder(
-        itemCount: posts.length,
-        itemBuilder: (context, idx) {
-          final post = posts[idx];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => UserProfilePage(user: post.author, posts: posts),
-                            ),
-                          );
-                        },
-                        child: CircleAvatar(child: Text(post.author[0])),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: ListView.builder(
+          itemCount: posts.length,
+          itemBuilder: (context, idx) {
+            final post = posts[idx];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(child: Text(post.author[0])),
+                        const SizedBox(width: 8),
+                        Text(post.author, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        const Spacer(),
+                        Text('${post.createdAt.hour}:${post.createdAt.minute.toString().padLeft(2, '0')}'),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(post.content),
+                    if (post.imageUrls.isNotEmpty)
+                      SizedBox(
+                        height: 120,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: post.imageUrls.map((url) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover),
+                          )).toList(),
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(post.author, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const Spacer(),
-                      Text('${post.createdAt.hour}:${post.createdAt.minute.toString().padLeft(2, '0')}'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(post.content),
-                  if (post.imageUrls.isNotEmpty)
-                    SizedBox(
-                      height: 120,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: post.imageUrls.map((url) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover),
+                    Wrap(
+                      spacing: 8,
+                      children: post.tags.map((t) => Chip(label: Text(t))).toList(),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.thumb_up),
+                          onPressed: () => _likePost(idx),
+                        ),
+                        Text('${post.likedBy.length}'),
+                        const SizedBox(width: 16),
+                        Icon(Icons.comment),
+                        Text('${post.comments.length}'),
+                      ],
+                    ),
+                    if (post.comments.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: post.comments.map((c) => Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text('${c.user}: ${c.text}', style: const TextStyle(color: Colors.grey)),
                         )).toList(),
                       ),
+                    TextField(
+                      decoration: const InputDecoration(hintText: '留言...'),
+                      onSubmitted: (text) => _addComment(idx, text),
                     ),
-                  Wrap(
-                    spacing: 8,
-                    children: post.tags.map((t) => Chip(label: Text(t))).toList(),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.thumb_up),
-                        onPressed: () => _likePost(idx),
-                      ),
-                      Text('${post.likedBy.length}'),
-                      const SizedBox(width: 16),
-                      Icon(Icons.comment),
-                      Text('${post.comments.length}'),
-                    ],
-                  ),
-                  if (post.comments.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: post.comments.map((c) => Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text('${c.user}: ${c.text}', style: const TextStyle(color: Colors.grey)),
-                      )).toList(),
-                    ),
-                  TextField(
-                    decoration: const InputDecoration(hintText: '留言...'),
-                    onSubmitted: (text) => _addComment(idx, text),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showPostDialog,
