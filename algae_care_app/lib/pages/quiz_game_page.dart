@@ -111,65 +111,75 @@ class _QuizGamePageState extends State<QuizGamePage> {
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.quiz, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: _showResult
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.emoji_events, color: Colors.amber, size: 64),
-                    const SizedBox(height: 16),
-                    Text('答對 $_score / ${_questions.length} 題', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    if (_score == _questions.length)
-                      const Text('🎉 恭喜獲得「知識達人」徽章！', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _restart,
-                      child: const Text('再玩一次'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('返回'),
-                    ),
-                  ],
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('第 ${_current + 1} 題', style: const TextStyle(fontSize: 18, color: Colors.grey)),
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(_questions[_current]['question'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: _showResult
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.emoji_events, color: Colors.amber, size: 64),
+                      const SizedBox(height: 16),
+                      Text('答對 $_score /  [38;5;246m${_questions.length} [0m 題', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      if (_score == _questions.length)
+                        const Text('🎉 恭喜獲得「知識達人」徽章！', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _restart,
+                        child: const Text('再玩一次'),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    ...List.generate(_questions[_current]['options'].length, (idx) {
-                      return Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[100],
-                            foregroundColor: Colors.green[900],
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 2,
-                          ),
-                          onPressed: () => _answer(idx),
-                          child: Text(_questions[_current]['options'][idx]),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('返回'),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('第 ${_current + 1} 題', style: const TextStyle(fontSize: 18, color: Colors.grey)),
+                      const SizedBox(height: 16),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(_questions[_current]['question'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                         ),
-                      );
-                    }),
-                  ],
-                ),
+                      ),
+                      const SizedBox(height: 24),
+                      ...List.generate(_questions[_current]['options'].length, (idx) {
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[100],
+                              foregroundColor: Colors.green[900],
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 2,
+                            ),
+                            onPressed: () => _answer(idx),
+                            child: Text(_questions[_current]['options'][idx]),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

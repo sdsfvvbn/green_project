@@ -258,7 +258,7 @@ class _HomePageState extends State<HomePage> {
               _buildEntryCard(
                 context,
                 icon: Icons.auto_awesome,
-                title: 'AI建議/成長曲線',
+                title: 'AI成長建議',
                 color: Colors.orange[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvicePage())),
               ),

@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import '../font_size_notifier.dart';
 import '../l10n/app_localizations.dart';
 
-import 'package:url_launcher/url_launcher.dart';
-import '../services/database_service.dart';
+
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -39,11 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: Text('${loc.get('font_small')}/${loc.get('font_medium')}/${loc.get('font_large')}'),
             onTap: () => _showFontDialog(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.feedback_outlined),
-            title: const Text('意見回饋/報錯'),
-            onTap: () => _showFeedbackDialog(context),
-          ),
+
           // 已移除一鍵清除所有資料功能
         ],
       ),
@@ -94,27 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showFeedbackDialog(BuildContext context) async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'algaecare@gmail.com', // 請改成你的 email
-      query: 'subject=意見回饋&body=請輸入您的建議...',
-    );
-    if (await canLaunchUrl(emailLaunchUri)) {
-      await launchUrl(emailLaunchUri);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('無法開啟 email app')),
-      );
-    }
-  }
 
-  void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: '微藻養殖APP',
-      applicationVersion: 'v1.0.0',
-      applicationLegalese: '開發者：algaecare@gmail.com',
-    );
-  }
+
+
 } 

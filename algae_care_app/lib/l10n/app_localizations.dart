@@ -28,7 +28,7 @@ class AppLocalizations {
       'app_name': 'Algae Care App',
       'version': 'Version',
       'developer': 'Developer',
-      'feedback': 'Feedback',
+
     },
     'zh': {
       'settings': '設定',
@@ -49,7 +49,7 @@ class AppLocalizations {
       'app_name': '微藻養殖APP',
       'version': '版本',
       'developer': '開發者',
-      'feedback': '意見回饋',
+
     },
   };
 
