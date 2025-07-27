@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
     return Consumer<FontSizeNotifier>(
       builder: (context, fontSizeNotifier, child) {
         return MaterialApp(
-          title: '微藻養殖APP',
+          title: '微藻照護APP',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             fontFamily: 'NotoSansTC',

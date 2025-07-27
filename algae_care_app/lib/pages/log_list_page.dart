@@ -323,7 +323,7 @@ class _LogListPageState extends State<LogListPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.thermostat, color: Colors.orange[400], size: 18),
-                                      Text('溫度：${log.temperature}°C'),
+                                      Text('溫度：${log.temperature.toStringAsFixed(0)}°C'),
                                     ],
                                   ),
                                   Row(
@@ -412,18 +412,20 @@ class _LogListPageState extends State<LogListPage> {
       final key = DateTime(log.date.year, log.date.month, log.date.day);
       logMap.putIfAbsent(key, () => []).add(log);
       
-      // 收集預計換水日期
+      // 收集預計換水日期（只標記今天及以後的）
       if (log.nextWaterChangeDate != null) {
         final scheduledKey = DateTime(
           log.nextWaterChangeDate!.year, 
           log.nextWaterChangeDate!.month, 
           log.nextWaterChangeDate!.day
         );
-        scheduledWaterChanges.putIfAbsent(scheduledKey, () => []).add(log);
+        if (!scheduledKey.isBefore(DateTime.now())) {
+          scheduledWaterChanges.putIfAbsent(scheduledKey, () => []).add(log);
+        }
       }
     }
     
-    // 日曆事件也顯示下次施肥
+    // 日曆事件也顯示下次施肥（只標記今天及以後的）
     final Map<DateTime, List<AlgaeLog>> scheduledFertilize = {};
     for (final log in logs) {
       if (log.nextFertilizeDate != null) {
@@ -432,7 +434,9 @@ class _LogListPageState extends State<LogListPage> {
           log.nextFertilizeDate!.month,
           log.nextFertilizeDate!.day,
         );
-        scheduledFertilize.putIfAbsent(scheduledKey, () => []).add(log);
+        if (!scheduledKey.isBefore(DateTime.now())) {
+          scheduledFertilize.putIfAbsent(scheduledKey, () => []).add(log);
+        }
       }
     }
 
@@ -490,7 +494,7 @@ class _LogListPageState extends State<LogListPage> {
                                   Chip(label: Text('種類: ${log.type ?? ''}')),
                                   if (log.isWaterChanged) Chip(label: const Text('換水'), backgroundColor: Colors.blue[100]),
                                   Chip(label: Text('pH: ${log.pH.toStringAsFixed(1)}')),
-                                  Chip(label: Text('溫度: ${log.temperature}°C')),
+                                  Chip(label: Text('溫度: ${log.temperature.toStringAsFixed(0)}°C')),
                                   Chip(label: Text('光照: ${log.lightHours.toStringAsFixed(1)}')),
                                 ],
                               ),
