@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'quiz_game_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/achievement_service.dart';
 
 class KnowledgePage extends StatefulWidget {
   const KnowledgePage({super.key});
@@ -97,6 +99,26 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
       dailyQuestions.shuffle();
       _todayQuestion = dailyQuestions.first['question']!;
     });
+  }
+
+  void _onAnswer(int selectedIdx) async {
+    setState(() {
+      _selectedIndex = selectedIdx;
+      _quizAnswered = true;
+      _quizCorrect = selectedIdx == _quiz['answer'];
+    });
+    // DIY成就自動解鎖
+    if (_quiz['question'].toString().contains('DIY')) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('diy_algae_done', true);
+      await AchievementService.instance.checkAndUpdateAchievements();
+    }
+    // 挑戰成就自動解鎖（如有挑戰題目）
+    if (_quiz['question'].toString().contains('挑戰')) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('challenge_event_done', true);
+      await AchievementService.instance.checkAndUpdateAchievements();
+    }
   }
 
   @override
