@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../services/achievement_service.dart';
 import '../models/algae_log.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -25,6 +26,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final DatabaseService _databaseService;
+  late final AchievementService _achievementService;
   List<AlgaeLog>? _logs;
   double _algaeVolume = 1.0;
   int _logDays = 1;
@@ -75,14 +77,55 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> _checkAchievements() async {
+    final newlyUnlocked = await _achievementService.checkAndUpdateAchievements();
+    if (newlyUnlocked.isNotEmpty) {
+      _showAchievementNotification(newlyUnlocked.first);
+    }
+  }
+
+  void _showAchievementNotification(String achievementId) {
+    final achievement = _achievementService.achievements[achievementId];
+    if (achievement != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.emoji_events, color: Colors.amber),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('🎉 解鎖成就：${achievement['title']}'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green[700],
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: '查看',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AchievementPage()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _currentFact = (facts..shuffle()).first;
     _databaseService = DatabaseService.instance;
+    _achievementService = AchievementService.instance;
     _loadLogs();
     _loadAlgaeSettings();
     _loadLogDays();
+    // 延遲檢查成就，確保頁面已載入
+    Future.delayed(const Duration(milliseconds: 500), _checkAchievements);
   }
 
   Future<void> _loadLogs() async {
@@ -98,8 +141,7 @@ class _HomePageState extends State<HomePage> {
 
   void _changeFact() {
     setState(() {
-      facts.shuffle();
-      _currentFact = facts.first;
+      _currentFact = (facts..shuffle()).first;
     });
   }
 
@@ -218,6 +260,30 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
               const SizedBox(height: 32),
+              // --- 知識小卡片移到這裡 ---
+              Card(
+                color: Colors.teal[50],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lightbulb, color: Colors.teal[700]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(_currentFact, style: const TextStyle(fontSize: 16, color: Colors.teal, fontWeight: FontWeight.w500)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.green),
+                        tooltip: '換一題',
+                        onPressed: _changeFact,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               // 假設有主要功能卡片或列表
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
@@ -297,26 +363,6 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               const Text('今日任務：檢查水色、調整光照、拍照記錄', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 32),
-              Card(
-                color: Colors.teal[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.lightbulb, color: Colors.teal[700]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(_currentFact, style: const TextStyle(fontSize: 16, color: Colors.teal)),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.refresh, color: Colors.green),
-                        onPressed: _changeFact,
-                        tooltip: '換一題',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
