@@ -116,24 +116,10 @@ class AchievementService {
     },
     'quiz_5_correct': {
       'title': '挑戰小遊戲高手',
-      'desc': '挑戰小遊戲答對5題',
+      'desc': '遊玩5次挑戰遊戲',
       'icon': 'psychology',
       'type': '知識',
-      'detail': '挑戰小遊戲答對5題，知識力UP!'
-    },
-    'diy_algae': {
-      'title': 'DIY創意王',
-      'desc': '完成1次DIY微藻應用',
-      'icon': 'lightbulb',
-      'type': '趣味',
-      'detail': 'DIY微藻果凍、餅乾、面膜等，創意無限。'
-    },
-    'challenge_event': {
-      'title': '挑戰參與者',
-      'desc': '參加一次官方/社群挑戰',
-      'icon': 'emoji_events',
-      'type': '趣味',
-      'detail': '參加微藻相關挑戰賽，與大家一起成長。'
+      'detail': '只要你遊玩5次挑戰小遊戲，就能獲得這個成就！'
     },
     'profile_complete': {
       'title': '個人檔案達人',
@@ -251,22 +237,12 @@ class AchievementService {
       await unlockAchievement('quiz_master');
       newlyUnlocked.add('quiz_master');
     }
-    // 16. 挑戰小遊戲高手
-    if (!await isAchievementUnlocked('quiz_5_correct') && (prefs.getInt('quiz_5_correct') ?? 0) >= 1) {
+    // 16. 挑戰小遊戲高手（遊玩5次）
+    if (!await isAchievementUnlocked('quiz_5_correct') && (prefs.getInt('quiz_play_count') ?? 0) >= 5) {
       await unlockAchievement('quiz_5_correct');
       newlyUnlocked.add('quiz_5_correct');
     }
-    // 17. DIY創意王
-    if (!await isAchievementUnlocked('diy_algae') && (prefs.getBool('diy_algae_done') ?? false)) {
-      await unlockAchievement('diy_algae');
-      newlyUnlocked.add('diy_algae');
-    }
-    // 18. 挑戰參與者
-    if (!await isAchievementUnlocked('challenge_event') && (prefs.getBool('challenge_event_done') ?? false)) {
-      await unlockAchievement('challenge_event');
-      newlyUnlocked.add('challenge_event');
-    }
-    // 19. 個人檔案達人
+    // 17. 個人檔案達人
     if (!await isAchievementUnlocked('profile_complete')) {
       final nickname = prefs.getString('profile_nickname') ?? '';
       final bio = prefs.getString('profile_bio') ?? '';
@@ -276,7 +252,7 @@ class AchievementService {
         newlyUnlocked.add('profile_complete');
       }
     }
-    // 20. 心得分享
+    // 18. 心得分享
     if (!await isAchievementUnlocked('log_with_note') && logs.any((log) => log.notes != null && log.notes!.trim().isNotEmpty)) {
       await unlockAchievement('log_with_note');
       newlyUnlocked.add('log_with_note');
