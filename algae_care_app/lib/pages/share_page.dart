@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:math';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:algae_care_app/services/database_service.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
+import 'dart:io';
+import '../services/achievement_service.dart';
 
 class SharePage extends StatefulWidget {
   const SharePage({super.key});
@@ -15,59 +14,48 @@ class SharePage extends StatefulWidget {
 }
 
 class _SharePageState extends State<SharePage> with SingleTickerProviderStateMixin {
-  File? _imageFile;
-  bool _showShareSuccess = false;
   late AnimationController _animController;
   late Animation<double> _scaleAnim;
-  double _algaeVolume = 1.0;
-  int _logDays = 1;
-  double get _monthCO2 => _algaeVolume * 2 / 12;
-  double get _totalCO2 => _algaeVolume * 2 * _logDays / 365;
+  XFile? _imageFile;
+  int badgeCount = 0;
+  int photoCount = 0;
+  late final AchievementService _achievementService;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.2).chain(CurveTween(curve: Curves.elasticOut)).animate(_animController);
-    _loadAlgaeSettings();
-    _loadLogDays();
+    _achievementService = AchievementService.instance;
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _scaleAnim = Tween<double>(begin: 1.0, end: 1.1).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+    _loadData();
   }
 
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
+  Future<void> _loadData() async {
+    final unlockedCount = await _achievementService.getUnlockedAchievementCount();
+    setState(() {
+      badgeCount = unlockedCount;
+      photoCount = 3; // 模擬照片數量
+    });
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
       setState(() {
-        _imageFile = File(picked.path);
+        _imageFile = image;
       });
     }
-  }
-
-  Future<void> _loadAlgaeSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _algaeVolume = prefs.getDouble('algae_volume') ?? 1.0;
-    });
-  }
-
-  Future<void> _loadLogDays() async {
-    final db = DatabaseService.instance;
-    final days = await db.getLogDays();
-    setState(() {
-      _logDays = days > 0 ? days : 1;
-    });
   }
 
   void _showSuccessDialog() async {
     _animController.forward(from: 0);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('share_achievement_unlocked', true);
+    
+    // 解鎖分享成就
+    await _achievementService.unlockAchievement('share_achievement');
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -116,20 +104,23 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
   }
 
   void _shareToFB(BuildContext context) {
-    // 預留 Facebook 分享（可用 share_plus 或 url_launcher 實作）
-    _showSuccessDialog();
-  }
-
-  void _shareToTwitter(BuildContext context) {
-    // 預留 Twitter 分享（可用 share_plus 或 url_launcher 實作）
+    final text = '分享我的微藻養殖成果：已解鎖$badgeCount個成就徽章，為地球減碳盡一份心力！一起加入綠色生活！#微藻養殖 #環保 #永續發展';
+    if (_imageFile != null) {
+      Share.shareXFiles([XFile(_imageFile!.path)], text: text);
+    } else {
+      Share.share(text);
+    }
     _showSuccessDialog();
   }
 
   @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 假資料可改為串接本地資料庫
-    final badgeCount = 5;
-    final photoCount = 7;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -171,7 +162,7 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                               ? Icon(Icons.emoji_nature, color: Colors.green[700], size: 64)
                               : kIsWeb
                                   ? Icon(Icons.image, size: 64, color: Colors.grey)
-                                  : Image.file(_imageFile!, width: 64, height: 64, fit: BoxFit.cover),
+                                  : Image.file(File(_imageFile!.path), width: 64, height: 64, fit: BoxFit.cover),
                           const SizedBox(height: 16),
                           Text('已獲得 $badgeCount 枚徽章', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                           const SizedBox(height: 8),
@@ -187,21 +178,43 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
-                    label: const Text('分享到 IG'),
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('分享到 Instagram'),
                     onPressed: () => _shareToIG(context),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(Icons.facebook),
                     label: const Text('分享到 Facebook'),
                     onPressed: () => _shareToFB(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
-                    label: const Text('分享到 Twitter'),
-                    onPressed: () => _shareToTwitter(context),
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('選擇照片'),
+                    onPressed: _pickImage,
+                  ),
+                  const SizedBox(height: 32),
+                  Card(
+                    color: Colors.blue[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Icon(Icons.lightbulb, color: Colors.blue[700]),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '分享小貼士',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '分享你的微藻成果，讓更多人了解微藻養殖的環保價值！每次分享都有機會獲得成就徽章。',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
