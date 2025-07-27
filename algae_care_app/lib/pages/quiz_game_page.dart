@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../services/achievement_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QuizGamePage extends StatefulWidget {
   const QuizGamePage({super.key});
@@ -237,11 +238,6 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
       'answer': 3,
     },
     {
-      'question': '哪一項是國際永續發展目標（SDGs）之一？',
-      'options': ['氣候行動', '太空探索', '基因改造', '核能發展'],
-      'answer': 0,
-    },
-    {
       'question': '微藻的生長可促進什麼？',
       'options': ['碳循環', '水循環', '氮循環', '硫循環'],
       'answer': 0,
@@ -328,6 +324,16 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
     _questions = _questions.take(5).toList();
     _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     _scaleAnim = Tween<double>(begin: 1.0, end: 1.1).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+    _incrementQuizPlayCount();
+  }
+
+  Future<void> _incrementQuizPlayCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    int count = prefs.getInt('quiz_play_count') ?? 0;
+    count++;
+    await prefs.setInt('quiz_play_count', count);
+    // 檢查成就
+    await _achievementService.checkAndUpdateAchievements();
   }
 
   void _answer(int idx) async {
@@ -363,6 +369,7 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
       _questions = _questions.take(5).toList();
       _userAnswers.clear();
     });
+    _incrementQuizPlayCount();
   }
 
   @override
@@ -439,7 +446,10 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
                       ),
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () async {
+                          await _incrementQuizPlayCount();
+                          Navigator.pop(context);
+                        },
                         child: const Text('返回'),
                       ),
                     ],
