@@ -215,51 +215,61 @@ class _KnowledgePageState extends State<KnowledgePage> with SingleTickerProvider
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,
-        leading: Icon(Icons.school, size: 28),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: Column(
-        children: [
-          Card(
-            color: Colors.teal[50],
-            margin: const EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Icon(Icons.lightbulb, color: Colors.teal[700]),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(_todayQuestion, style: const TextStyle(fontSize: 16, color: Colors.teal)),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.green),
-                    onPressed: _changeDailyQuestion,
-                    tooltip: '換一題',
-                  ),
-                ],
+      body: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity != null && details.primaryVelocity! > 0) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Column(
+          children: [
+            Card(
+              color: Colors.teal[50],
+              margin: const EdgeInsets.all(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb, color: Colors.teal[700]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(_todayQuestion, style: const TextStyle(fontSize: 16, color: Colors.teal)),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.refresh, color: Colors.green),
+                      onPressed: _changeDailyQuestion,
+                      tooltip: '換一題',
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              itemCount: knowledgeList.length,
-              separatorBuilder: (context, i) => const Divider(),
-              itemBuilder: (context, i) {
-                final k = knowledgeList[i];
-                return Card(
-                  color: k['color'] as Color?,
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: ListTile(
-                    leading: Icon(k['icon'] as IconData, color: Colors.green[800], size: 32),
-                    title: Text(k['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(k['content'] as String),
-                  ),
-                );
-              },
+            Expanded(
+              child: ListView.separated(
+                itemCount: knowledgeList.length,
+                separatorBuilder: (context, i) => const Divider(),
+                itemBuilder: (context, i) {
+                  final k = knowledgeList[i];
+                  return Card(
+                    color: k['color'] as Color?,
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: ListTile(
+                      leading: Icon(k['icon'] as IconData, color: Colors.green[800], size: 32),
+                      title: Text(k['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(k['content'] as String),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

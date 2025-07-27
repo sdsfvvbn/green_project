@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../services/achievement_service.dart';
 import '../models/algae_log.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
@@ -9,11 +10,12 @@ import 'advice_page.dart';
 import 'achievement_page.dart';
 import 'knowledge_page.dart';
 import 'share_page.dart';
-import 'algae_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'carbon_chart_widget.dart';
 import 'share_wall_page.dart';
 import 'quiz_game_page.dart';
+import 'algae_profile_list_page.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,11 +26,31 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final DatabaseService _databaseService;
-  List<AlgaeLog> _logs = [];
+  late final AchievementService _achievementService;
+  List<AlgaeLog>? _logs;
   double _algaeVolume = 1.0;
   int _logDays = 1;
-  double get _monthCO2 => _algaeVolume * 2 / 12;
-  double get _totalCO2 => _algaeVolume * 2 * _logDays / 365;
+  double get _monthCO2 {
+    final now = DateTime.now();
+    // 如果 _logs 尚未載入，直接回傳 0
+    if (_logs == null) return 0.0;
+    final thisMonthLogs = _logs!
+        .where((log) => log.date.year == now.year && log.date.month == now.month)
+        .toList();
+
+    if (thisMonthLogs.isEmpty) return 0.0;
+
+    // 找出本月最早的 log 日期
+    thisMonthLogs.sort((a, b) => a.date.compareTo(b.date));
+    final firstLogDate = thisMonthLogs.first.date;
+
+    // 算從第一筆 log 到今天的天數（含頭尾）
+    final days = now.difference(DateTime(firstLogDate.year, firstLogDate.month, firstLogDate.day)).inDays + 1;
+
+    // 用天數 × 單日吸碳量
+    return days * _algaeVolume * 2 / 365;
+  }
+  double _chartTotalCO2 = 0.0;
   final List<String> facts = [
     '微藻一年可吸收自身重量10倍的二氧化碳。',
     '螺旋藻是最常見的可食用微藻之一。',
@@ -55,18 +77,63 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<void> _checkAchievements() async {
+    final newlyUnlocked = await _achievementService.checkAndUpdateAchievements();
+    if (newlyUnlocked.isNotEmpty) {
+      _showAchievementNotification(newlyUnlocked.first);
+    }
+  }
+
+  void _showAchievementNotification(String achievementId) {
+    final achievement = _achievementService.achievements[achievementId];
+    if (achievement != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.emoji_events, color: Colors.amber),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('🎉 解鎖成就：${achievement['title']}'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green[700],
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: '查看',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AchievementPage()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _currentFact = (facts..shuffle()).first;
     _databaseService = DatabaseService.instance;
+    _achievementService = AchievementService.instance;
     _loadLogs();
     _loadAlgaeSettings();
     _loadLogDays();
+    // 延遲檢查成就，確保頁面已載入
+    Future.delayed(const Duration(milliseconds: 500), _checkAchievements);
   }
 
   Future<void> _loadLogs() async {
     final logs = await _databaseService.getAllLogs();
+    print('getAllLogs 回傳: ${logs.length} 筆');
+    for (var log in logs) {
+      print('log: ${log.toMap()}');
+    }
     setState(() {
       _logs = logs;
     });
@@ -74,8 +141,7 @@ class _HomePageState extends State<HomePage> {
 
   void _changeFact() {
     setState(() {
-      facts.shuffle();
-      _currentFact = facts.first;
+      _currentFact = (facts..shuffle()).first;
     });
   }
 
@@ -97,7 +163,10 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.settings, size: 26),
             tooltip: '設定',
             onPressed: () {
-              Navigator.pushNamed(context, '/settings');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              );
             },
           ),
         ],
@@ -118,15 +187,34 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.eco, color: Colors.green[700], size: 32),
-                  const SizedBox(width: 8),
-                  const Text('歡迎來到微藻養殖APP', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.eco, color: Colors.green[700], size: 32),
+                    const SizedBox(width: 8),
+                    const Text('歡迎來到微藻養殖APP', 
+                      style: TextStyle(
+                        fontSize: 20, 
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1
+                      )
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
-              const Text('推廣個人化微藻養殖，讓每個人都能輕鬆減碳、愛地球！', style: TextStyle(color: Colors.teal)),
+              Center(
+                child: Text(
+                  '推廣個人化微藻養殖，讓每個人都能輕鬆減碳、愛地球！', 
+                  style: TextStyle(
+                    color: Colors.teal,
+                    fontSize: 16,
+                    letterSpacing: 0.5
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               const SizedBox(height: 24),
               Card(
                 color: Colors.green[50],
@@ -140,7 +228,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text('本月吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                          Text('${_monthCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Text('${_monthCO2.toStringAsFixed(2)} kg', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
                         ],
                       ),
                       const Spacer(),
@@ -148,36 +236,54 @@ class _HomePageState extends State<HomePage> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           const Text('累積吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                          Text('${_totalCO2.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
+                          Text('${_chartTotalCO2.toStringAsFixed(2)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
                         ],
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.water_drop, color: Colors.white),
-                  label: const Text('編輯微藻養殖設定', style: TextStyle(color: Colors.white, fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal[700],
-                    minimumSize: const Size(220, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              
+              // 吸碳量折線圖
+              _logs == null
+                ? const Center(child: CircularProgressIndicator())
+                : _logs!.isEmpty
+                    ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
+                    : CarbonChartWidget(
+                        logs: _logs!, 
+                        onTotalChanged: (val) {
+                          if (_chartTotalCO2 != val) {
+                            setState(() {
+                              _chartTotalCO2 = val;
+                            });
+                          }
+                        },
+                      ),
+              const SizedBox(height: 32),
+              // --- 知識小卡片移到這裡 ---
+              Card(
+                color: Colors.teal[50],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lightbulb, color: Colors.teal[700]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(_currentFact, style: const TextStyle(fontSize: 16, color: Colors.teal, fontWeight: FontWeight.w500)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.green),
+                        tooltip: '換一題',
+                        onPressed: _changeFact,
+                      ),
+                    ],
                   ),
-                  onPressed: () async {
-                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AlgaeSettingsPage()));
-                    _loadAlgaeSettings();
-                  },
                 ),
               ),
-              // 吸碳量折線圖
-              (_logs.isEmpty && _logs != null)
-                ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
-                : (_logs.isEmpty
-                    ? const Center(child: CircularProgressIndicator())
-                    : CarbonChartWidget(logs: _logs, algaeVolume: _algaeVolume)),
-              const SizedBox(height: 32),
+              const SizedBox(height: 8),
               // 假設有主要功能卡片或列表
               Card(
                 margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
@@ -188,7 +294,29 @@ class _HomePageState extends State<HomePage> {
                   title: Text('日誌紀錄', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   subtitle: Text('查看與管理你的微藻養殖日誌'),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
-                  onTap: () => Navigator.pushNamed(context, '/logList'),
+                  onTap: () async {
+                    final result = await Navigator.pushNamed(context, '/logList');
+                    if (result == true) {
+                      _loadLogs();
+                    }
+                  },
+                  hoverColor: Colors.green[50],
+                ),
+              ),
+              // 新增 Profile 管理卡片
+              Card(
+                margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                elevation: 6,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                child: ListTile(
+                  leading: Icon(Icons.group_work, color: Colors.green[700], size: 32),
+                  title: Text('我的微藻', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  subtitle: Text('建立、編輯與管理你的藻類資料'),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AlgaeProfileListPage()),
+                  ),
                   hoverColor: Colors.green[50],
                 ),
               ),
@@ -196,7 +324,7 @@ class _HomePageState extends State<HomePage> {
               _buildEntryCard(
                 context,
                 icon: Icons.auto_awesome,
-                title: 'AI建議/成長曲線',
+                title: 'AI成長建議',
                 color: Colors.orange[100],
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvicePage())),
               ),
@@ -235,26 +363,6 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               const Text('今日任務：檢查水色、調整光照、拍照記錄', style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 32),
-              Card(
-                color: Colors.teal[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.lightbulb, color: Colors.teal[700]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(_currentFact, style: const TextStyle(fontSize: 16, color: Colors.teal)),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.refresh, color: Colors.green),
-                        onPressed: _changeFact,
-                        tooltip: '換一題',
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
