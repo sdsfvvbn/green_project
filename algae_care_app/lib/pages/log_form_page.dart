@@ -343,14 +343,11 @@ class _LogFormPageState extends State<LogFormPage> {
                     builder: (ctx) {
                       return SizedBox(
                         height: 250,
-                        child: ListWheelScrollView.useDelegate(
+                        child: CupertinoPicker(
                           itemExtent: 40,
+                          scrollController: FixedExtentScrollController(initialItem: _temperatureValue),
                           onSelectedItemChanged: (v) => temp = v,
-                          controller: FixedExtentScrollController(initialItem: _temperatureValue),
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            builder: (ctx, idx) => idx <= 50 ? Center(child: Text('$idx °C')) : null,
-                            childCount: 51,
-                          ),
+                          children: List.generate(41, (idx) => Center(child: Text('$idx °C'))),
                         ),
                       );
                     },

@@ -46,7 +46,7 @@ class AppLocalizations {
       'clear_data_confirm': '確定要清除所有資料嗎？此操作無法復原！',
       'cancel': '取消',
       'confirm': '確定',
-      'app_name': '微藻養殖APP',
+      'app_name': '微藻照護',
       'version': '版本',
       'developer': '開發者',
 
