@@ -80,4 +80,4 @@ class CarbonChartWidget extends StatelessWidget {
       ),
     );
   }
-} 
+}
