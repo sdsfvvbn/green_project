@@ -75,7 +75,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     List<double> simCarbon = [];
     for (int i = 0; i < simCon.length; i++) {
       // 使用更合理的計算方式，讓數值更明顯
-      double dailyCO2 = widget.volume * 0.01; // 每日吸碳量 = 體積 * 0.01 kg
+      double dailyCO2 = widget.volume * 10; // 每日吸碳量 = 體積 * 10 g
       simCarbon.add(dailyCO2);
     }
     // 7. 聚合資料（日/月/年）
@@ -150,6 +150,8 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('累積吸碳量折線圖（${widget.viewMode == 'day' ? '日' : widget.viewMode == 'month' ? '月' : '年'}）', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 4),
+            Text('單位：公克(g) / 公斤(kg)', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 12),
             SizedBox(
               height: 200,
@@ -162,7 +164,13 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
                         showTitles: true, 
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          return Text(value.toStringAsFixed(2), style: const TextStyle(fontSize: 10));
+                          String label;
+                          if (value >= 1000) {
+                            label = '${(value / 1000).toStringAsFixed(1)}kg';
+                          } else {
+                            label = '${value.toInt()}g';
+                          }
+                          return Text(label, style: const TextStyle(fontSize: 10));
                         },
                       ),
                     ),
@@ -201,7 +209,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('目前累積吸碳量：${_totalCO2.toStringAsFixed(2)} kg', style: const TextStyle(color: Colors.teal)),
+            Text('目前累積吸碳量：${_totalCO2 >= 1000 ? '${(_totalCO2 / 1000).toStringAsFixed(2)} kg' : '${_totalCO2.toInt()} g'}', style: const TextStyle(color: Colors.teal)),
           ],
         ),
       ),
