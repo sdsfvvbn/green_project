@@ -24,7 +24,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -48,7 +48,8 @@ class DatabaseService {
         isFertilized INTEGER DEFAULT 0,
         nextFertilizeDate TEXT,
         waterVolume REAL,
-        concentration REAL
+        concentration REAL,
+        profileId INTEGER
       )
     ''');
     await db.execute('''
@@ -100,6 +101,12 @@ class DatabaseService {
     } catch (e) {
       print('concentration 欄位已存在或新增失敗: $e');
     }
+    // 若沒有 profileId 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN profileId INTEGER');
+    } catch (e) {
+      print('profileId 欄位已存在或新增失敗: $e');
+    }
     // 若未來升級時補上 profile 表
     await db.execute('''
       CREATE TABLE IF NOT EXISTS algae_profile(
@@ -147,6 +154,20 @@ class DatabaseService {
     return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
   }
 
+  Future<List<AlgaeLog>> getLogsByProfile(int? profileId) async {
+    if (kIsWeb) {
+      return [];
+    }
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'algae_logs', 
+      where: profileId != null ? 'profileId = ?' : 'profileId IS NULL',
+      whereArgs: profileId != null ? [profileId] : null,
+      orderBy: 'date DESC'
+    );
+    return List.generate(maps.length, (i) => AlgaeLog.fromMap(maps[i]));
+  }
+
   Future<AlgaeLog?> getLog(int id) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -179,6 +200,21 @@ class DatabaseService {
     );
   }
 
+  Future<AlgaeLog?> getLogByDateAndProfile(DateTime date, int? profileId) async {
+    final db = await database;
+    final dateStr = date.toIso8601String().split('T')[0];
+    final List<Map<String, dynamic>> maps = await db.query(
+      'algae_logs',
+      where: "date LIKE ? AND profileId = ?",
+      whereArgs: ["$dateStr%", profileId],
+    );
+    if (maps.isNotEmpty) {
+      return AlgaeLog.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  // 保留舊方法以向後兼容
   Future<AlgaeLog?> getLogByDate(DateTime date) async {
     final db = await database;
     final dateStr = date.toIso8601String().split('T')[0];

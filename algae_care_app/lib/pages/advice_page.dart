@@ -64,10 +64,9 @@ class _AdvicePageState extends State<AdvicePage> {
 
   // 新增：根據選擇的藻類載入對應的日誌
   Future<void> _loadLogsForProfile(AlgaeProfile profile) async {
-    final logs = await db.DatabaseService.instance.getAllLogs();
-    final filteredLogs = logs.where((log) => log.type == profile.species).toList();
+    final logs = await db.DatabaseService.instance.getLogsByProfile(profile.id);
     setState(() {
-      _allLogs = filteredLogs;
+      _allLogs = logs;
       _selectedType = profile.species;
       _algaeVolume = profile.waterVolume; // 更新體積
     });

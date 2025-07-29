@@ -14,6 +14,7 @@ class AlgaeLog {
   final DateTime? nextFertilizeDate;
   final double? waterVolume;
   final double? concentration; // 新增：藻類濃度 (mg/L)
+  final int? profileId; // 新增：關聯的藻類資料ID
 
   AlgaeLog({
     this.id,
@@ -31,6 +32,7 @@ class AlgaeLog {
     this.nextFertilizeDate,
     this.waterVolume,
     this.concentration,
+    this.profileId,
   });
 
   Map<String, dynamic> toMap() {
@@ -50,6 +52,7 @@ class AlgaeLog {
       'nextFertilizeDate': nextFertilizeDate?.toIso8601String(),
       'waterVolume': waterVolume,
       'concentration': concentration,
+      'profileId': profileId,
     };
   }
 
@@ -70,6 +73,7 @@ class AlgaeLog {
       nextFertilizeDate: map['nextFertilizeDate'] != null ? DateTime.parse(map['nextFertilizeDate']) : null,
       waterVolume: map['waterVolume'] != null ? (map['waterVolume'] is int ? (map['waterVolume'] as int).toDouble() : map['waterVolume'] as double) : null,
       concentration: map['concentration'] != null ? (map['concentration'] is int ? (map['concentration'] as int).toDouble() : map['concentration'] as double) : null,
+      profileId: map['profileId'],
     );
   }
 
@@ -89,6 +93,7 @@ class AlgaeLog {
     DateTime? nextFertilizeDate,
     double? waterVolume,
     double? concentration,
+    int? profileId,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -106,6 +111,7 @@ class AlgaeLog {
       nextFertilizeDate: nextFertilizeDate ?? this.nextFertilizeDate,
       waterVolume: waterVolume ?? this.waterVolume,
       concentration: concentration ?? this.concentration,
+      profileId: profileId ?? this.profileId,
     );
   }
 }

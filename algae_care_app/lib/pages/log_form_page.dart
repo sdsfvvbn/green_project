@@ -93,7 +93,30 @@ class _LogFormPageState extends State<LogFormPage> {
         _isFertilized = log.isFertilized;
         _nextWaterChangeDate = log.nextWaterChangeDate;
         _nextFertilizeDate = log.nextFertilizeDate;
-        // _selectedProfileId = log.profileId; // 刪除 profileId 賦值
+        
+        // 根據 profileId 選擇對應的藻類資料
+        if (log.profileId != null) {
+          _selectedProfile = _profiles.firstWhere(
+            (profile) => profile.id == log.profileId,
+            orElse: () => _profiles.isNotEmpty ? _profiles.first : AlgaeProfile(
+              id: null,
+              species: '綠藻',
+              name: null,
+              startDate: DateTime.now(),
+              length: 1.0,
+              width: 1.0,
+              waterSource: '自來水',
+              lightType: 'LED',
+              lightTypeDescription: null,
+              lightIntensityLevel: '中光',
+              waterChangeFrequency: 7,
+              waterVolume: 1.0,
+              fertilizerType: '液態肥',
+              fertilizerDescription: null,
+            ),
+          );
+        }
+        
         if (log.photoPath != null && log.photoPath!.isNotEmpty) {
           _image = File(log.photoPath!);
         }
@@ -813,15 +836,16 @@ class _LogFormPageState extends State<LogFormPage> {
                               isFertilized: _isFertilized,
                               nextFertilizeDate: _isFertilized ? _nextFertilizeDate : null,
                               waterVolume: waterVolume,
+                              profileId: _selectedProfile?.id,
                             );
-                            final existLog = await DatabaseService.instance.getLogByDate(log.date);
+                            final existLog = await DatabaseService.instance.getLogByDateAndProfile(log.date, _selectedProfile?.id);
                             Navigator.of(context).pop(); // 關閉 loading
                             if (existLog != null && widget.logId == null) {
                               final shouldOverwrite = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: Text('覆蓋提醒'),
-                                  content: Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
+                                  title: const Text('覆蓋提醒'),
+                                  content: Text('這一天已經有「${_selectedProfile?.name ?? _selectedProfile?.species}」的日誌記錄，儲存會覆蓋原本的內容，確定要繼續嗎？'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(ctx, false),
@@ -829,7 +853,7 @@ class _LogFormPageState extends State<LogFormPage> {
                                     ),
                                     ElevatedButton(
                                       onPressed: () => Navigator.pop(ctx, true),
-                                      child: Text('覆蓋', style: TextStyle(color: Colors.green)),
+                                      child: const Text('覆蓋', style: TextStyle(color: Colors.green)),
                                     ),
                                   ],
                                 ),
