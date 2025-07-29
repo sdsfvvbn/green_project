@@ -15,6 +15,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // 移除這行，恢復狀態列
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent, // 狀態列透明
