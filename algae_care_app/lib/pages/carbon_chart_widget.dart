@@ -171,25 +171,12 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
       int showDays = 30;
       int totalDays = _carbonSim.length;
       int startIdx = totalDays > showDays ? totalDays - showDays : 0;
-      double cumulative = startIdx > 0 ? _carbonSim[startIdx - 1] : 0;
-      List<FlSpot> filteredSpots = [];
-      List<String> filteredLabels = [];
-      for (int i = startIdx; i < _carbonSim.length; i++) {
-        cumulative += _carbonSim[i];
-        _carbonSim[i] = cumulative;
-      }
-      // 決定取樣間隔
       int interval = (showDays > 6) ? 5 : 1;
-      int count = 0;
       for (int i = startIdx; i < _carbonSim.length; i++) {
         if ((i - startIdx) % interval == 0 || i == _carbonSim.length - 1) {
-          filteredSpots.add(FlSpot((i - startIdx).toDouble(), _carbonSim[i]));
-          filteredLabels.add(DateFormat('MM/dd').format(_allDays[i]));
-          count++;
+          xLabels.add(DateFormat('MM/dd').format(_allDays[i]));
         }
       }
-      spots = filteredSpots;
-      xLabels = filteredLabels;
     } else if (widget.viewMode == 'month') {
       xLabels = _allDays.map((d) => DateFormat('yyyy-MM').format(d)).toSet().toList();
     } else if (widget.viewMode == 'year') {
