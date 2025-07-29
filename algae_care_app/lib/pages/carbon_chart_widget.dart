@@ -90,58 +90,69 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
       simCon.add(concentration);
     }
     // 6. 計算每日吸碳量
-    List<double> simCarbon = [];
+    List<double> dailyCarbon = [];
     for (int i = 0; i < simCon.length; i++) {
-      // 使用更合理的計算方式，讓數值更明顯
       double dailyCO2 = widget.volume * 10; // 每日吸碳量 = 體積 * 10 g
-      simCarbon.add(dailyCO2);
+      dailyCarbon.add(dailyCO2);
     }
-    // 7. 聚合資料（日/月/年）
+    // 7. 計算累積吸碳量
+    List<double> cumulativeCarbon = [];
+    double sum = 0;
+    for (int i = 0; i < dailyCarbon.length; i++) {
+      sum += dailyCarbon[i];
+      cumulativeCarbon.add(sum);
+    }
+    // 8. 聚合資料（日/月/年）
     List<FlSpot> spots = [];
-    List<double> cumulativeList = [];
+    List<String> xLabels = [];
     if (widget.viewMode == 'day') {
-      double cumulative = 0;
-      for (int i = 0; i < simCarbon.length; i++) {
-        cumulative += simCarbon[i];
-        cumulativeList.add(cumulative);
-        spots.add(FlSpot(i.toDouble(), cumulative));
+      // 只顯示最近30天
+      int showDays = 30;
+      int totalDays = cumulativeCarbon.length;
+      int startIdx = totalDays > showDays ? totalDays - showDays : 0;
+      int interval = (showDays > 6) ? 5 : 1;
+      for (int i = startIdx; i < cumulativeCarbon.length; i++) {
+        if ((i - startIdx) % interval == 0 || i == cumulativeCarbon.length - 1) {
+          spots.add(FlSpot((i - startIdx).toDouble(), cumulativeCarbon[i]));
+          xLabels.add(DateFormat('MM/dd').format(allDays[i]));
+        }
       }
     } else if (widget.viewMode == 'month') {
       Map<String, double> monthMap = {};
       for (int i = 0; i < allDays.length; i++) {
         String ym = DateFormat('yyyy-MM').format(allDays[i]);
-        monthMap[ym] = (monthMap[ym] ?? 0) + simCarbon[i];
+        monthMap[ym] = (monthMap[ym] ?? 0) + dailyCarbon[i];
       }
       int idx = 0;
       double cumulative = 0;
       for (var entry in monthMap.entries) {
         cumulative += entry.value;
-        cumulativeList.add(cumulative);
         spots.add(FlSpot(idx.toDouble(), cumulative));
+        xLabels.add(entry.key);
         idx++;
       }
     } else if (widget.viewMode == 'year') {
       Map<String, double> yearMap = {};
       for (int i = 0; i < allDays.length; i++) {
         String y = DateFormat('yyyy').format(allDays[i]);
-        yearMap[y] = (yearMap[y] ?? 0) + simCarbon[i];
+        yearMap[y] = (yearMap[y] ?? 0) + dailyCarbon[i];
       }
       int idx = 0;
       double cumulative = 0;
       for (var entry in yearMap.entries) {
         cumulative += entry.value;
-        cumulativeList.add(cumulative);
         spots.add(FlSpot(idx.toDouble(), cumulative));
+        xLabels.add(entry.key);
         idx++;
       }
     }
-    // 8. 更新狀態
+    // 9. 更新狀態
     setState(() {
       _allDays = allDays;
       _concentrationSim = simCon;
-      _carbonSim = cumulativeList; // 這裡改成累積值
+      _carbonSim = spots.map((e) => e.y).toList(); // 只存圖表要用的累積值
       // 計算累積總量
-      _totalCO2 = cumulativeList.isNotEmpty ? cumulativeList.last : 0;
+      _totalCO2 = spots.isNotEmpty ? spots.last.y : 0;
     });
     if (widget.onTotalChanged != null) {
       widget.onTotalChanged!(_totalCO2);
