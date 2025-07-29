@@ -290,17 +290,10 @@ class _AdvicePageState extends State<AdvicePage> {
               // 吸碳量折線圖
               _allLogs.isEmpty
                 ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('調試信息：日誌數量: ${_allLogs.length}, 體積: $_algaeVolume'),
-                      const SizedBox(height: 8),
-                      CarbonChartWidget(
-                        logs: _allLogs,
-                        volume: _algaeVolume,
-                        viewMode: 'day',
-                      ),
-                    ],
+                : CarbonChartWidget(
+                    logs: _allLogs,
+                    volume: _algaeVolume,
+                    viewMode: 'day',
                   ),
             ],
           ),

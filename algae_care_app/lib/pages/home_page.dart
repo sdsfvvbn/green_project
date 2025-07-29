@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../services/achievement_service.dart';
 import '../models/algae_log.dart';
-import '../models/algae_profile.dart';
 import 'package:intl/intl.dart';
 import 'log_list_page.dart';
 import 'advice_page.dart';
@@ -27,8 +26,6 @@ class _HomePageState extends State<HomePage> {
   late final DatabaseService _databaseService;
   late final AchievementService _achievementService;
   List<AlgaeLog>? _logs;
-  List<AlgaeProfile> _profiles = [];
-  AlgaeProfile? _selectedProfile; // 新增：選中的藻類資料
   double _algaeVolume = 1.0;
   int _logDays = 1;
   double get _monthCO2 {
@@ -126,7 +123,7 @@ class _HomePageState extends State<HomePage> {
     _currentFact = (facts..shuffle()).first;
     _databaseService = DatabaseService.instance;
     _achievementService = AchievementService.instance;
-    _loadProfiles(); // 改為先載入藻類資料
+    _loadLogs(); // 載入所有日誌
     _loadAlgaeSettings();
     _loadLogDays();
     // 延遲檢查成就，確保頁面已載入
@@ -146,31 +143,15 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _loadProfiles() async {
-    final profiles = await _databaseService.getAllProfiles();
-    if (mounted) {
-      setState(() {
-        _profiles = profiles;
-        // 如果有資料，預設選擇第一個
-        if (profiles.isNotEmpty) {
-          _selectedProfile = profiles.first;
-        }
-      });
-      // 在setState之後載入對應的日誌
-      if (profiles.isNotEmpty) {
-        _loadLogsForProfile(profiles.first);
-      }
-    }
-  }
-
-  // 新增：根據選擇的藻類載入對應的日誌
-  Future<void> _loadLogsForProfile(AlgaeProfile profile) async {
+  Future<void> _loadLogs() async {
     final logs = await _databaseService.getAllLogs();
-    final filteredLogs = logs.where((log) => log.type == profile.species).toList();
+    print('getAllLogs 回傳: ${logs.length} 筆');
+    for (var log in logs) {
+      print('log: ${log.toMap()}');
+    }
     if (mounted) {
       setState(() {
-        _logs = filteredLogs;
-        _algaeVolume = profile.waterVolume;
+        _logs = logs;
       });
     }
   }
@@ -274,30 +255,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // 藻類選擇器
-              if (_profiles.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: DropdownButton<AlgaeProfile>(
-                    value: _selectedProfile,
-                    hint: const Text('選擇要顯示的藻類'),
-                    isExpanded: true,
-                    items: _profiles.map((profile) {
-                      return DropdownMenuItem(
-                        value: profile,
-                        child: Text(profile.name ?? profile.species),
-                      );
-                    }).toList(),
-                    onChanged: (profile) {
-                      setState(() {
-                        _selectedProfile = profile;
-                      });
-                      if (profile != null) {
-                        _loadLogsForProfile(profile);
-                      }
-                    },
-                  ),
-                ),
+
 
               const SizedBox(height: 32),
               // --- 知識小卡片移到這裡 ---

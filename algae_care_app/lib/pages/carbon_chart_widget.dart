@@ -64,55 +64,19 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
         logConMap[DateTime(log.date.year, log.date.month, log.date.day)] = log.concentration!;
       }
     }
-    // 4. 初始濃度 - 如果沒有濃度數據，根據日誌數量估算
-    double initialCon = logConMap[DateTime(firstDate.year, firstDate.month, firstDate.day)] ?? 
-                       (sortedLogs.length > 0 ? 1.0 + (sortedLogs.length * 0.1) : 1.0);
-    // 5. 濃度模擬
+    // 4. 簡化的濃度模擬 - 不依賴實際濃度數據
     List<double> simCon = [];
-    double curCon = initialCon;
     for (int i = 0; i < allDays.length; i++) {
-      final d = allDays[i];
-      // 如果這天有日誌，直接用日誌濃度
-      if (logConMap.containsKey(DateTime(d.year, d.month, d.day))) {
-        curCon = logConMap[DateTime(d.year, d.month, d.day)]!;
-      } else {
-        // 推論 growth rate
-        double growthRate = 0.3;
-        // 前7天用0.3，之後用日誌推論
-        if (i >= 7) {
-          // 找最近兩筆日誌
-          DateTime? prevDate;
-          double? prevCon;
-          for (int j = i - 1; j >= 0; j--) {
-            if (logConMap.containsKey(DateTime(allDays[j].year, allDays[j].month, allDays[j].day))) {
-              prevDate = allDays[j];
-              prevCon = logConMap[DateTime(allDays[j].year, allDays[j].month, allDays[j].day)];
-              break;
-            }
-          }
-          DateTime? nextDate;
-          double? nextCon;
-          for (int j = i; j < allDays.length; j++) {
-            if (logConMap.containsKey(DateTime(allDays[j].year, allDays[j].month, allDays[j].day))) {
-              nextDate = allDays[j];
-              nextCon = logConMap[DateTime(allDays[j].year, allDays[j].month, allDays[j].day)];
-              break;
-            }
-          }
-          if (prevDate != null && nextDate != null && prevCon != null && nextCon != null && nextDate.isAfter(prevDate)) {
-            growthRate = (nextCon - prevCon) / nextDate.difference(prevDate).inDays;
-          }
-        }
-        curCon += growthRate;
-      }
-      simCon.add(curCon);
+      // 使用固定的濃度值，基於日誌數量
+      double concentration = 1.0 + (sortedLogs.length * 0.1);
+      simCon.add(concentration);
     }
     // 6. 計算每日吸碳量
     List<double> simCarbon = [];
     for (int i = 0; i < simCon.length; i++) {
-      double dryWeight = simCon[i] * widget.volume / 1000.0;
-      double co2 = dryWeight * 0.5 * 3.67;
-      simCarbon.add(co2);
+      // 使用更簡單的計算方式，不依賴濃度數據
+      double dailyCO2 = widget.volume * 2 / 365; // 每日吸碳量 = 體積 * 2 / 365
+      simCarbon.add(dailyCO2);
     }
     // 7. 聚合資料（日/月/年）
     List<FlSpot> spots = [];
