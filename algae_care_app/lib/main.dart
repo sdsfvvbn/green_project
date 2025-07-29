@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'pages/home_page.dart';
 import 'pages/log_list_page.dart';
@@ -12,8 +13,9 @@ import 'l10n/app_localizations.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   
   // 桌面平台才初始化 FFI
   if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows ||
