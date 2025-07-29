@@ -30,6 +30,43 @@ class _AdvicePageState extends State<AdvicePage> {
     super.initState();
     _loadData();
     _loadProfiles();
+    // 新增：進入頁面時自動彈出選擇藻類Dialog
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_selectedProfile == null && _profiles.isNotEmpty) {
+        _showProfileSelectDialog();
+      }
+    });
+  }
+
+  void _showProfileSelectDialog() async {
+    if (_profiles.isEmpty) return;
+    final selected = await showDialog<AlgaeProfile>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('請選擇要查看的藻類'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _profiles.length,
+            itemBuilder: (context, idx) {
+              final p = _profiles[idx];
+              return ListTile(
+                title: Text(p.name ?? p.species),
+                onTap: () => Navigator.of(context).pop(p),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    if (selected != null) {
+      setState(() {
+        _selectedProfile = selected;
+      });
+      _loadLogsForProfile(selected);
+    }
   }
 
   Future<void> _loadData() async {
@@ -405,5 +442,4 @@ class _CustomAdviceInputState extends State<_CustomAdviceInput> {
       ],
     );
   }
-}
 }
