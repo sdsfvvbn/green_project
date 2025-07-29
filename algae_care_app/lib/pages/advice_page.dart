@@ -82,21 +82,18 @@ class _AdvicePageState extends State<AdvicePage> {
     final profiles = await db.DatabaseService.instance.getAllProfiles();
     setState(() {
       _profiles = profiles;
-      // 如果有資料，預設選擇第一個
-      if (profiles.isNotEmpty) {
+      if (profiles.length == 1) {
         _selectedProfile = profiles.first;
         _algaeVolume = profiles.first.waterVolume;
       }
     });
-    // 新增：載入完成後再判斷是否要彈窗
-    if (mounted && _profiles.isNotEmpty && _selectedProfile == null) {
+    if (mounted && _profiles.length > 1 && _selectedProfile == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showProfileSelectDialog();
       });
     }
-    // 在setState之後載入對應的日誌
-    if (profiles.isNotEmpty) {
-      _loadLogsForProfile(profiles.first);
+    if (_selectedProfile != null) {
+      _loadLogsForProfile(_selectedProfile!);
     }
   }
 
