@@ -68,8 +68,14 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
           con = 0.1;
         } else if (color == '綠色') {
           con = 0.5;
-        } else if (color == '藍綠色') {
-          con = 1.0;
+        } else if (color == '黃綠色') {
+          con = 0.5;
+        } else if (color == '其他') {
+          con = 0.5;
+        } else if (color == '黃色') {
+          con = 0.8;
+        } else if (color == '深綠色') {
+          con = 0.9;
         }
       }
       if (con != null) {
@@ -150,7 +156,29 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     // 產生 X 軸標籤
     List<String> xLabels = [];
     if (widget.viewMode == 'day') {
-      xLabels = _allDays.map((d) => DateFormat('MM/dd').format(d)).toList();
+      // 只顯示最近30天
+      int showDays = 30;
+      int totalDays = _carbonSim.length;
+      int startIdx = totalDays > showDays ? totalDays - showDays : 0;
+      double cumulative = startIdx > 0 ? _carbonSim[startIdx - 1] : 0;
+      List<FlSpot> filteredSpots = [];
+      List<String> filteredLabels = [];
+      for (int i = startIdx; i < _carbonSim.length; i++) {
+        cumulative += _carbonSim[i];
+        _carbonSim[i] = cumulative;
+      }
+      // 決定取樣間隔
+      int interval = (showDays > 6) ? 5 : 1;
+      int count = 0;
+      for (int i = startIdx; i < _carbonSim.length; i++) {
+        if ((i - startIdx) % interval == 0 || i == _carbonSim.length - 1) {
+          filteredSpots.add(FlSpot((i - startIdx).toDouble(), _carbonSim[i]));
+          filteredLabels.add(DateFormat('MM/dd').format(_allDays[i]));
+          count++;
+        }
+      }
+      spots = filteredSpots;
+      xLabels = filteredLabels;
     } else if (widget.viewMode == 'month') {
       xLabels = _allDays.map((d) => DateFormat('yyyy-MM').format(d)).toSet().toList();
     } else if (widget.viewMode == 'year') {
