@@ -64,8 +64,9 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
         logConMap[DateTime(log.date.year, log.date.month, log.date.day)] = log.concentration!;
       }
     }
-    // 4. 初始濃度
-    double initialCon = logConMap[DateTime(firstDate.year, firstDate.month, firstDate.day)] ?? 1.0;
+    // 4. 初始濃度 - 如果沒有濃度數據，根據日誌數量估算
+    double initialCon = logConMap[DateTime(firstDate.year, firstDate.month, firstDate.day)] ?? 
+                       (sortedLogs.length > 0 ? 1.0 + (sortedLogs.length * 0.1) : 1.0);
     // 5. 濃度模擬
     List<double> simCon = [];
     double curCon = initialCon;

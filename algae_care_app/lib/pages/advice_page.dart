@@ -53,9 +53,12 @@ class _AdvicePageState extends State<AdvicePage> {
       if (profiles.isNotEmpty) {
         _selectedProfile = profiles.first;
         _algaeVolume = profiles.first.waterVolume;
-        _loadLogsForProfile(_selectedProfile!);
       }
     });
+    // 在setState之後載入對應的日誌
+    if (profiles.isNotEmpty) {
+      _loadLogsForProfile(profiles.first);
+    }
   }
 
   // 新增：根據選擇的藻類載入對應的日誌
@@ -65,6 +68,7 @@ class _AdvicePageState extends State<AdvicePage> {
     setState(() {
       _allLogs = filteredLogs;
       _selectedType = profile.species;
+      _algaeVolume = profile.waterVolume; // 更新體積
     });
     _refreshAnalysis();
   }
@@ -286,10 +290,17 @@ class _AdvicePageState extends State<AdvicePage> {
               // 吸碳量折線圖
               _allLogs.isEmpty
                 ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
-                : CarbonChartWidget(
-                    logs: _allLogs,
-                    volume: _algaeVolume,
-                    viewMode: 'day',
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('調試信息：日誌數量: ${_allLogs.length}, 體積: $_algaeVolume'),
+                      const SizedBox(height: 8),
+                      CarbonChartWidget(
+                        logs: _allLogs,
+                        volume: _algaeVolume,
+                        viewMode: 'day',
+                      ),
+                    ],
                   ),
             ],
           ),
