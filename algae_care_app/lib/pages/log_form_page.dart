@@ -36,6 +36,7 @@ class _LogFormPageState extends State<LogFormPage> {
   List<File> _images = []; // 新增：多圖
   List<String> _actions = []; // 新增：多種操作標記
   List<AlgaeProfile> _profiles = [];
+  AlgaeProfile? _selectedProfile; // 新增：選中的藻類資料
 
   // 1. 新增光照、溫度、pH的狀態變數
   int _lightHour = 0;
@@ -59,6 +60,19 @@ class _LogFormPageState extends State<LogFormPage> {
     final profiles = await DatabaseService.instance.getAllProfiles();
     setState(() {
       _profiles = profiles;
+      // 如果有資料，預設選擇第一個
+      if (profiles.isNotEmpty) {
+        _selectedProfile = profiles.first;
+        _autoFillFromProfile(_selectedProfile!);
+      }
+    });
+  }
+
+  // 新增：根據選擇的藻類自動填入資訊
+  void _autoFillFromProfile(AlgaeProfile profile) {
+    setState(() {
+      _type = profile.species;
+      // 可以根據需要自動填入其他資訊
     });
   }
 
@@ -156,11 +170,43 @@ class _LogFormPageState extends State<LogFormPage> {
           key: _formKey,
           child: ListView(
             children: [
-              // 新增：選擇微藻 profile
-              // 刪除 _profiles.isNotEmpty 判斷
-              // 刪除 DropdownButtonFormField<int> 所屬微藻下拉選單
-              // 刪除 _profiles.isEmpty 判斷
-              // 刪除 const Text('請先建立微藻資料', style: TextStyle(color: Colors.red))
+              // 新增：選擇藻類名字的下拉選單
+              if (_profiles.isNotEmpty)
+                DropdownButtonFormField<AlgaeProfile>(
+                  value: _selectedProfile,
+                  decoration: const InputDecoration(
+                    labelText: '選擇藻類',
+                    prefixIcon: Icon(Icons.grass),
+                    contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    border: UnderlineInputBorder(),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.green, width: 2),
+                    ),
+                  ),
+                  items: _profiles.map((profile) {
+                    return DropdownMenuItem(
+                      value: profile,
+                      child: Text(profile.name ?? profile.species),
+                    );
+                  }).toList(),
+                  onChanged: (profile) {
+                    setState(() {
+                      _selectedProfile = profile;
+                      if (profile != null) {
+                        _autoFillFromProfile(profile);
+                      }
+                    });
+                  },
+                ),
+              if (_profiles.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('請先建立藻類資料', style: TextStyle(color: Colors.red)),
+                ),
+              const SizedBox(height: 16),
               ListTile(
                 title: Text(
                   '日期：${_selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : ''}',
@@ -714,4 +760,4 @@ class _LogFormPageState extends State<LogFormPage> {
       ),
     );
   }
-} 
+}

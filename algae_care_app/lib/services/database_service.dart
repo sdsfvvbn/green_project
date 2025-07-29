@@ -24,7 +24,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -47,7 +47,8 @@ class DatabaseService {
         nextWaterChangeDate TEXT,
         isFertilized INTEGER DEFAULT 0,
         nextFertilizeDate TEXT,
-        waterVolume REAL
+        waterVolume REAL,
+        concentration REAL
       )
     ''');
     await db.execute('''
@@ -92,6 +93,12 @@ class DatabaseService {
       await db.execute('ALTER TABLE algae_logs ADD COLUMN waterVolume REAL');
     } catch (e) {
       print('waterVolume 欄位已存在或新增失敗: $e');
+    }
+    // 若沒有 concentration 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN concentration REAL');
+    } catch (e) {
+      print('concentration 欄位已存在或新增失敗: $e');
     }
     // 若未來升級時補上 profile 表
     await db.execute('''
@@ -199,7 +206,7 @@ class DatabaseService {
     final db = await database;
     final today = DateTime.now();
     final todayStr = today.toIso8601String().split('T')[0];
-    
+
     final List<Map<String, dynamic>> maps = await db.query(
       'algae_logs',
       where: 'nextWaterChangeDate IS NOT NULL AND nextWaterChangeDate <= ?',
@@ -244,4 +251,4 @@ class DatabaseService {
     await db.delete('algae_logs');
     await db.delete('algae_profile');
   }
-} 
+}

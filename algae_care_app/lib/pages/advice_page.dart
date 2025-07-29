@@ -21,6 +21,7 @@ class _AdvicePageState extends State<AdvicePage> {
   String? _selectedType;
   List<String> _allTypes = [];
   List<AlgaeProfile> _profiles = [];
+  AlgaeProfile? _selectedProfile; // 新增：選中的藻類資料
   double _algaeVolume = 1.0;
 
   @override
@@ -48,11 +49,24 @@ class _AdvicePageState extends State<AdvicePage> {
     final profiles = await db.DatabaseService.instance.getAllProfiles();
     setState(() {
       _profiles = profiles;
-      // 計算藻類體積，取第一個profile的體積或預設值
+      // 如果有資料，預設選擇第一個
       if (profiles.isNotEmpty) {
+        _selectedProfile = profiles.first;
         _algaeVolume = profiles.first.waterVolume;
+        _loadLogsForProfile(_selectedProfile!);
       }
     });
+  }
+
+  // 新增：根據選擇的藻類載入對應的日誌
+  Future<void> _loadLogsForProfile(AlgaeProfile profile) async {
+    final logs = await db.DatabaseService.instance.getAllLogs();
+    final filteredLogs = logs.where((log) => log.type == profile.species).toList();
+    setState(() {
+      _allLogs = filteredLogs;
+      _selectedType = profile.species;
+    });
+    _refreshAnalysis();
   }
 
   Future<void> _refreshAnalysis() async {
@@ -156,24 +170,26 @@ class _AdvicePageState extends State<AdvicePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 品種選擇下拉選單
-              if (_allTypes.isNotEmpty)
+              // 藻類名字選擇下拉選單
+              if (_profiles.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
-                  child: DropdownButton<String>(
-                    value: _selectedType,
-                    hint: const Text('請選擇藻類品種'),
-                    items: _allTypes.map((type) {
+                  child: DropdownButton<AlgaeProfile>(
+                    value: _selectedProfile,
+                    hint: const Text('請選擇藻類'),
+                    items: _profiles.map((profile) {
                       return DropdownMenuItem(
-                        value: type,
-                        child: Text(type),
+                        value: profile,
+                        child: Text(profile.name ?? profile.species),
                       );
                     }).toList(),
-                    onChanged: (value) {
+                    onChanged: (profile) {
                       setState(() {
-                        _selectedType = value;
+                        _selectedProfile = profile;
                       });
-                      _refreshAnalysis();
+                      if (profile != null) {
+                        _loadLogsForProfile(profile);
+                      }
                     },
                   ),
                 ),
@@ -272,7 +288,8 @@ class _AdvicePageState extends State<AdvicePage> {
                 ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
                 : CarbonChartWidget(
                     logs: _allLogs,
-                    algaeVolume: _algaeVolume,
+                    volume: _algaeVolume,
+                    viewMode: 'day',
                   ),
             ],
           ),
@@ -344,4 +361,5 @@ class _CustomAdviceInputState extends State<_CustomAdviceInput> {
       ],
     );
   }
+}
 }

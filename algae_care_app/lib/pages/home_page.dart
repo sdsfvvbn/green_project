@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../services/achievement_service.dart';
 import '../models/algae_log.dart';
+import '../models/algae_profile.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'log_list_page.dart';
@@ -28,6 +29,8 @@ class _HomePageState extends State<HomePage> {
   late final DatabaseService _databaseService;
   late final AchievementService _achievementService;
   List<AlgaeLog>? _logs;
+  List<AlgaeProfile> _profiles = [];
+  AlgaeProfile? _selectedProfile; // 新增：選中的藻類資料
   double _algaeVolume = 1.0;
   int _logDays = 1;
   double get _monthCO2 {
@@ -121,7 +124,7 @@ class _HomePageState extends State<HomePage> {
     _currentFact = (facts..shuffle()).first;
     _databaseService = DatabaseService.instance;
     _achievementService = AchievementService.instance;
-    _loadLogs();
+    _loadProfiles(); // 改為先載入藻類資料
     _loadAlgaeSettings();
     _loadLogDays();
     // 延遲檢查成就，確保頁面已載入
@@ -136,6 +139,28 @@ class _HomePageState extends State<HomePage> {
     }
     setState(() {
       _logs = logs;
+    });
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await _databaseService.getAllProfiles();
+    setState(() {
+      _profiles = profiles;
+      // 如果有資料，預設選擇第一個
+      if (profiles.isNotEmpty) {
+        _selectedProfile = profiles.first;
+        _loadLogsForProfile(_selectedProfile!);
+      }
+    });
+  }
+
+  // 新增：根據選擇的藻類載入對應的日誌
+  Future<void> _loadLogsForProfile(AlgaeProfile profile) async {
+    final logs = await _databaseService.getAllLogs();
+    final filteredLogs = logs.where((log) => log.type == profile.species).toList();
+    setState(() {
+      _logs = filteredLogs;
+      _algaeVolume = profile.waterVolume;
     });
   }
 
@@ -244,6 +269,30 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
+              // 藻類選擇器
+              if (_profiles.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: DropdownButton<AlgaeProfile>(
+                    value: _selectedProfile,
+                    hint: const Text('選擇要顯示的藻類'),
+                    isExpanded: true,
+                    items: _profiles.map((profile) {
+                      return DropdownMenuItem(
+                        value: profile,
+                        child: Text(profile.name ?? profile.species),
+                      );
+                    }).toList(),
+                    onChanged: (profile) {
+                      setState(() {
+                        _selectedProfile = profile;
+                      });
+                      if (profile != null) {
+                        _loadLogsForProfile(profile);
+                      }
+                    },
+                  ),
+                ),
               // 吸碳量折線圖
               _logs == null
                 ? const Center(child: CircularProgressIndicator())
@@ -251,7 +300,8 @@ class _HomePageState extends State<HomePage> {
                     ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
                     : CarbonChartWidget(
                         logs: _logs!,
-                        algaeVolume: 1.0, // ← 這一行要加
+                        volume: _algaeVolume,
+                        viewMode: 'day',
                         onTotalChanged: (val) {
                           if (_chartTotalCO2 != val) {
                             setState(() {
