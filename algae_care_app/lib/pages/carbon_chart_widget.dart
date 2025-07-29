@@ -74,36 +74,42 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     // 6. 計算每日吸碳量
     List<double> simCarbon = [];
     for (int i = 0; i < simCon.length; i++) {
-      // 使用更簡單的計算方式，不依賴濃度數據
-      double dailyCO2 = widget.volume * 2 / 365; // 每日吸碳量 = 體積 * 2 / 365
+      // 使用更合理的計算方式，讓數值更明顯
+      double dailyCO2 = widget.volume * 0.01; // 每日吸碳量 = 體積 * 0.01 kg
       simCarbon.add(dailyCO2);
     }
     // 7. 聚合資料（日/月/年）
     List<FlSpot> spots = [];
     if (widget.viewMode == 'day') {
+      double cumulative = 0;
       for (int i = 0; i < simCarbon.length; i++) {
-        spots.add(FlSpot(i.toDouble(), simCarbon[i]));
+        cumulative += simCarbon[i];
+        spots.add(FlSpot(i.toDouble(), cumulative));
       }
     } else if (widget.viewMode == 'month') {
       Map<String, double> monthMap = {};
       for (int i = 0; i < allDays.length; i++) {
         String ym = DateFormat('yyyy-MM').format(allDays[i]);
-        monthMap[ym] = simCarbon[i];
+        monthMap[ym] = (monthMap[ym] ?? 0) + simCarbon[i];
       }
       int idx = 0;
+      double cumulative = 0;
       for (var entry in monthMap.entries) {
-        spots.add(FlSpot(idx.toDouble(), entry.value));
+        cumulative += entry.value;
+        spots.add(FlSpot(idx.toDouble(), cumulative));
         idx++;
       }
     } else if (widget.viewMode == 'year') {
       Map<String, double> yearMap = {};
       for (int i = 0; i < allDays.length; i++) {
         String y = DateFormat('yyyy').format(allDays[i]);
-        yearMap[y] = simCarbon[i];
+        yearMap[y] = (yearMap[y] ?? 0) + simCarbon[i];
       }
       int idx = 0;
+      double cumulative = 0;
       for (var entry in yearMap.entries) {
-        spots.add(FlSpot(idx.toDouble(), entry.value));
+        cumulative += entry.value;
+        spots.add(FlSpot(idx.toDouble(), cumulative));
         idx++;
       }
     }
@@ -112,7 +118,8 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
       _allDays = allDays;
       _concentrationSim = simCon;
       _carbonSim = simCarbon;
-      _totalCO2 = simCarbon.isNotEmpty ? simCarbon.last : 0;
+      // 計算累積總量
+      _totalCO2 = simCarbon.isNotEmpty ? simCarbon.reduce((a, b) => a + b) : 0;
     });
     if (widget.onTotalChanged != null) {
       widget.onTotalChanged!(_totalCO2);
@@ -151,7 +158,13 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
                   gridData: FlGridData(show: true),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                      sideTitles: SideTitles(
+                        showTitles: true, 
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                          return Text(value.toStringAsFixed(2), style: const TextStyle(fontSize: 10));
+                        },
+                      ),
                     ),
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
@@ -171,7 +184,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
                   minX: 0,
                   maxX: xLabels.length > 1 ? xLabels.length - 1 : 1,
                   minY: 0,
-                  maxY: _carbonSim.isNotEmpty && _carbonSim.length > 1 ? (_carbonSim.reduce((a, b) => a > b ? a : b) * 1.1) : (_carbonSim.isNotEmpty ? _carbonSim.first * 1.1 : 1),
+                  maxY: _carbonSim.isNotEmpty ? (_carbonSim.reduce((a, b) => a > b ? a : b) * 1.2) : 0.1,
                   lineBarsData: [
                     LineChartBarData(
                       spots: [

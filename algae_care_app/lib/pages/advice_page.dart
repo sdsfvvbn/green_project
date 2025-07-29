@@ -23,6 +23,7 @@ class _AdvicePageState extends State<AdvicePage> {
   List<AlgaeProfile> _profiles = [];
   AlgaeProfile? _selectedProfile; // 新增：選中的藻類資料
   double _algaeVolume = 1.0;
+  String _selectedViewMode = 'day'; // 新增：選擇的檢視模式
 
   @override
   void initState() {
@@ -287,15 +288,55 @@ class _AdvicePageState extends State<AdvicePage> {
                 ),
               ),
               const SizedBox(height: 16),
+              // 時間範圍選擇器
+              if (!_allLogs.isEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildTimeRangeButton('日', 'day'),
+                      const SizedBox(width: 8),
+                      _buildTimeRangeButton('月', 'month'),
+                      const SizedBox(width: 8),
+                      _buildTimeRangeButton('年', 'year'),
+                    ],
+                  ),
+                ),
               // 吸碳量折線圖
               _allLogs.isEmpty
                 ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
                 : CarbonChartWidget(
                     logs: _allLogs,
                     volume: _algaeVolume,
-                    viewMode: 'day',
+                    viewMode: _selectedViewMode,
                   ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeRangeButton(String label, String mode) {
+    final isSelected = _selectedViewMode == mode;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedViewMode = mode;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
