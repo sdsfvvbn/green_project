@@ -386,7 +386,7 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
           '知識挑戰',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
-        backgroundColor: Colors.orange[700],
+        backgroundColor: Colors.green[700],
         foregroundColor: Colors.white,
         elevation: 6,
         centerTitle: true,

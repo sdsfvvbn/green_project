@@ -151,37 +151,36 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            '個人化微藻養殖APP',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-          ),
-          backgroundColor: Colors.green[700],
-          foregroundColor: Colors.white,
-          elevation: 6,
-          centerTitle: true,
-          leading: Icon(Icons.eco, size: 28),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings, size: 26),
-              tooltip: '設定',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsPage()),
-                );
-              },
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          '個人化微藻養殖APP',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        backgroundColor: Colors.green[700],
+        foregroundColor: Colors.white,
+        elevation: 6,
+        centerTitle: true,
+        leading: Icon(Icons.eco, size: 28),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, size: 26),
+            tooltip: '設定',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                 Center(
                   child: Image.asset(
                     'assets/images/logo.png',
