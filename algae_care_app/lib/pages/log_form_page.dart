@@ -170,12 +170,44 @@ class _LogFormPageState extends State<LogFormPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // 日期欄位移到最上面
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListTile(
+                  title: Row(
+                    children: [
+                      Text(
+                        '日期 *',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : '請選擇日期',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedDate != null ? Colors.black : Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () => _pickDate(context),
+                ),
+              ),
+              const SizedBox(height: 16),
               // 新增：選擇藻類名字的下拉選單
               if (_profiles.isNotEmpty)
                 DropdownButtonFormField<AlgaeProfile>(
                   value: _selectedProfile,
                   decoration: const InputDecoration(
-                    labelText: '選擇藻類',
+                    labelText: '選擇藻類 *',
                     prefixIcon: Icon(Icons.grass),
                     contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     border: UnderlineInputBorder(),
@@ -200,6 +232,12 @@ class _LogFormPageState extends State<LogFormPage> {
                       }
                     });
                   },
+                  validator: (value) {
+                    if (value == null) {
+                      return '請選擇藻類';
+                    }
+                    return null;
+                  },
                 ),
               if (_profiles.isEmpty)
                 const Padding(
@@ -207,23 +245,10 @@ class _LogFormPageState extends State<LogFormPage> {
                   child: Text('請先建立藻類資料', style: TextStyle(color: Colors.red)),
                 ),
               const SizedBox(height: 16),
-              ListTile(
-                title: Text(
-                  '日期：${_selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : ''}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[800],
-                  ),
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _pickDate(context),
-              ),
-              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _type,
                 decoration: const InputDecoration(
-                  labelText: '種類',
+                  labelText: '種類 *',
                   prefixIcon: Icon(Icons.grass),
                   contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   border: UnderlineInputBorder(),
@@ -245,13 +270,19 @@ class _LogFormPageState extends State<LogFormPage> {
                   if (val != '其他') _customType = null;
                 }),
                 onSaved: (val) => _type = val,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '請選擇種類';
+                  }
+                  return null;
+                },
               ),
               if (_type == '其他')
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
                     decoration: const InputDecoration(
-                      labelText: '請輸入種類',
+                      labelText: '請輸入種類 *',
                       contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       border: UnderlineInputBorder(),
                       enabledBorder: UnderlineInputBorder(
@@ -263,13 +294,19 @@ class _LogFormPageState extends State<LogFormPage> {
                     ),
                     onChanged: (val) => _customType = val,
                     onSaved: (val) => _customType = val,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '請輸入種類';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _waterColor,
                 decoration: const InputDecoration(
-                  labelText: '水色',
+                  labelText: '水色 *',
                   prefixIcon: Icon(Icons.water_drop),
                   contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   border: UnderlineInputBorder(),
@@ -293,13 +330,19 @@ class _LogFormPageState extends State<LogFormPage> {
                   if (val != '其他') _customWaterColor = null;
                 }),
                 onSaved: (val) => _waterColor = val,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return '請選擇水色';
+                  }
+                  return null;
+                },
               ),
               if (_waterColor == '其他')
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
                     decoration: const InputDecoration(
-                      labelText: '請輸入水色',
+                      labelText: '請輸入水色 *',
                       contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       border: UnderlineInputBorder(),
                       enabledBorder: UnderlineInputBorder(
@@ -311,6 +354,12 @@ class _LogFormPageState extends State<LogFormPage> {
                     ),
                     onChanged: (val) => _customWaterColor = val,
                     onSaved: (val) => _customWaterColor = val,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '請輸入水色';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               const SizedBox(height: 16),
@@ -374,8 +423,16 @@ class _LogFormPageState extends State<LogFormPage> {
                   });
                 },
                 child: ListTile(
-                  title: Text('光照'),
-                  subtitle: Text('${_lightHour} 小時 ${_lightMinute} 分'),
+                  title: Row(
+                    children: [
+                      Text('光照 *'),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_lightHour} 小時 ${_lightMinute} 分',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
                   trailing: const Icon(Icons.wb_sunny),
                 ),
               ),
@@ -403,8 +460,16 @@ class _LogFormPageState extends State<LogFormPage> {
                   });
                 },
                 child: ListTile(
-                  title: Text('溫度 (°C)'),
-                  subtitle: Text('$_temperatureValue °C'),
+                  title: Row(
+                    children: [
+                      Text('溫度 (°C) *'),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$_temperatureValue °C',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
                   trailing: const Icon(Icons.thermostat),
                 ),
               ),
@@ -413,7 +478,7 @@ class _LogFormPageState extends State<LogFormPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('pH', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text('pH *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Slider(
                     min: 0,
                     max: 14,
@@ -642,6 +707,70 @@ class _LogFormPageState extends State<LogFormPage> {
                       ),
                       onPressed: () async {
                         try {
+                          // 檢查必填欄位
+                          List<String> missingFields = [];
+                          
+                          if (_selectedProfile == null) {
+                            missingFields.add('選擇藻類');
+                          }
+                          
+                          if (_selectedDate == null) {
+                            missingFields.add('日期');
+                          }
+                          
+                          if (_type == null || _type!.isEmpty) {
+                            missingFields.add('種類');
+                          } else if (_type == '其他' && (_customType == null || _customType!.isEmpty)) {
+                            missingFields.add('自訂種類');
+                          }
+                          
+                          if (_waterColor == null || _waterColor!.isEmpty) {
+                            missingFields.add('水色');
+                          } else if (_waterColor == '其他' && (_customWaterColor == null || _customWaterColor!.isEmpty)) {
+                            missingFields.add('自訂水色');
+                          }
+                          
+                          if (missingFields.isNotEmpty) {
+                            // 顯示必填欄位提醒視窗
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Row(
+                                  children: [
+                                    Icon(Icons.warning, color: Colors.orange),
+                                    SizedBox(width: 8),
+                                    Text('必填欄位提醒'),
+                                  ],
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('請填寫以下必填欄位：'),
+                                    const SizedBox(height: 8),
+                                    ...missingFields.map((field) => Padding(
+                                      padding: const EdgeInsets.only(left: 16, top: 4),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.arrow_right, size: 16, color: Colors.red),
+                                          const SizedBox(width: 8),
+                                          Text(field, style: const TextStyle(color: Colors.red)),
+                                        ],
+                                      ),
+                                    )),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text('確定'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            return;
+                          }
+                          
                           if (_formKey.currentState!.validate()) {
                             showDialog(
                               context: context,
