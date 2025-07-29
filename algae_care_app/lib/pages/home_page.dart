@@ -4,7 +4,6 @@ import '../services/database_service.dart';
 import '../services/achievement_service.dart';
 import '../models/algae_log.dart';
 import '../models/algae_profile.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'log_list_page.dart';
 import 'advice_page.dart';
@@ -12,7 +11,6 @@ import 'achievement_page.dart';
 import 'knowledge_page.dart';
 import 'share_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'carbon_chart_widget.dart';
 import 'share_wall_page.dart';
 import 'quiz_game_page.dart';
 import 'algae_profile_list_page.dart';
@@ -53,7 +51,7 @@ class _HomePageState extends State<HomePage> {
     // 用天數 × 單日吸碳量
     return days * _algaeVolume * 2 / 365;
   }
-  double _chartTotalCO2 = 0.0;
+
   final List<String> facts = [
     '微藻一年可吸收自身重量10倍的二氧化碳。',
     '螺旋藻是最常見的可食用微藻之一。',
@@ -67,17 +65,21 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadAlgaeSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _algaeVolume = prefs.getDouble('algae_volume') ?? 1.0;
-    });
-    _loadLogDays();
+    if (mounted) {
+      setState(() {
+        _algaeVolume = prefs.getDouble('algae_volume') ?? 1.0;
+      });
+      _loadLogDays();
+    }
   }
 
   Future<void> _loadLogDays() async {
     final days = await _databaseService.getLogDays();
-    setState(() {
-      _logDays = days > 0 ? days : 1;
-    });
+    if (mounted) {
+      setState(() {
+        _logDays = days > 0 ? days : 1;
+      });
+    }
   }
 
   Future<void> _checkAchievements() async {
@@ -137,31 +139,40 @@ class _HomePageState extends State<HomePage> {
     for (var log in logs) {
       print('log: ${log.toMap()}');
     }
-    setState(() {
-      _logs = logs;
-    });
+    if (mounted) {
+      setState(() {
+        _logs = logs;
+      });
+    }
   }
 
   Future<void> _loadProfiles() async {
     final profiles = await _databaseService.getAllProfiles();
-    setState(() {
-      _profiles = profiles;
-      // 如果有資料，預設選擇第一個
+    if (mounted) {
+      setState(() {
+        _profiles = profiles;
+        // 如果有資料，預設選擇第一個
+        if (profiles.isNotEmpty) {
+          _selectedProfile = profiles.first;
+        }
+      });
+      // 在setState之後載入對應的日誌
       if (profiles.isNotEmpty) {
-        _selectedProfile = profiles.first;
-        _loadLogsForProfile(_selectedProfile!);
+        _loadLogsForProfile(profiles.first);
       }
-    });
+    }
   }
 
   // 新增：根據選擇的藻類載入對應的日誌
   Future<void> _loadLogsForProfile(AlgaeProfile profile) async {
     final logs = await _databaseService.getAllLogs();
     final filteredLogs = logs.where((log) => log.type == profile.species).toList();
-    setState(() {
-      _logs = filteredLogs;
-      _algaeVolume = profile.waterVolume;
-    });
+    if (mounted) {
+      setState(() {
+        _logs = filteredLogs;
+        _algaeVolume = profile.waterVolume;
+      });
+    }
   }
 
   void _changeFact() {
@@ -257,13 +268,7 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
                       const Spacer(),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('累積吸碳量', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                          Text('${_chartTotalCO2.toStringAsFixed(2)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal)),
-                        ],
-                      ),
+
                     ],
                   ),
                 ),
@@ -293,23 +298,7 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-              // 吸碳量折線圖
-              _logs == null
-                ? const Center(child: CircularProgressIndicator())
-                : _logs!.isEmpty
-                    ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
-                    : CarbonChartWidget(
-                        logs: _logs!,
-                        volume: _algaeVolume,
-                        viewMode: 'day',
-                        onTotalChanged: (val) {
-                          if (_chartTotalCO2 != val) {
-                            setState(() {
-                              _chartTotalCO2 = val;
-                            });
-                          }
-                        },
-                      ),
+
               const SizedBox(height: 32),
               // --- 知識小卡片移到這裡 ---
               Card(
@@ -347,7 +336,7 @@ class _HomePageState extends State<HomePage> {
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.green[700]),
                   onTap: () async {
                     final result = await Navigator.pushNamed(context, '/logList');
-                    if (result == true) {
+                    if (result == true && mounted) {
                       _loadLogs();
                     }
                   },
