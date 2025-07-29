@@ -20,6 +20,7 @@ class DatabaseService {
     print('Initializing DB...');
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    print('資料庫路徑: $path');
 
     return await openDatabase(
       path,
@@ -43,7 +44,10 @@ class DatabaseService {
         notes TEXT,
         type TEXT,
         isWaterChanged INTEGER DEFAULT 0,
-        nextWaterChangeDate TEXT
+        nextWaterChangeDate TEXT,
+        isFertilized INTEGER DEFAULT 0,
+        nextFertilizeDate TEXT,
+        waterVolume REAL
       )
     ''');
     await db.execute('''
@@ -51,7 +55,7 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         species TEXT NOT NULL,
         name TEXT,
-        ageDays INTEGER NOT NULL,
+        startDate TEXT NOT NULL,
         length REAL NOT NULL,
         width REAL NOT NULL,
         waterSource TEXT NOT NULL,
@@ -71,31 +75,59 @@ class DatabaseService {
       // Add nextWaterChangeDate column
       await db.execute('ALTER TABLE algae_logs ADD COLUMN nextWaterChangeDate TEXT');
     }
+    // 若沒有 isFertilized 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN isFertilized INTEGER DEFAULT 0');
+    } catch (e) {
+      print('isFertilized 欄位已存在或新增失敗: $e');
+    }
+    // 若沒有 nextFertilizeDate 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN nextFertilizeDate TEXT');
+    } catch (e) {
+      print('nextFertilizeDate 欄位已存在或新增失敗: $e');
+    }
+    // 若沒有 waterVolume 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_logs ADD COLUMN waterVolume REAL');
+    } catch (e) {
+      print('waterVolume 欄位已存在或新增失敗: $e');
+    }
     // 若未來升級時補上 profile 表
     await db.execute('''
       CREATE TABLE IF NOT EXISTS algae_profile(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         species TEXT NOT NULL,
         name TEXT,
-        ageDays INTEGER NOT NULL,
+        startDate TEXT NOT NULL,
         length REAL NOT NULL,
         width REAL NOT NULL,
         waterSource TEXT NOT NULL,
         lightType TEXT NOT NULL,
         lightTypeDescription TEXT,
-        lightIntensity REAL NOT NULL,
+        lightIntensityLevel TEXT,
         waterChangeFrequency INTEGER NOT NULL,
         waterVolume REAL NOT NULL,
         fertilizerType TEXT NOT NULL,
         fertilizerDescription TEXT
       )
     ''');
+    // 若沒有 startDate 欄位則加上
+    try {
+      await db.execute('ALTER TABLE algae_profile ADD COLUMN startDate TEXT');
+    } catch (e) {
+      print('startDate 欄位已存在或新增失敗: $e');
+    }
   }
 
   Future<int> createLog(AlgaeLog log) async {
     print('createLog called with: ${log.toMap()}');
     final db = await database;
-    return await db.insert('algae_logs', log.toMap());
+    final id = await db.insert('algae_logs', log.toMap());
+    print('createLog insert 回傳 id: $id');
+    final all = await db.query('algae_logs');
+    print('createLog 後立即查詢: $all');
+    return id;
   }
 
   Future<List<AlgaeLog>> getAllLogs() async {
@@ -205,5 +237,11 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('algae_logs');
+    await db.delete('algae_profile');
   }
 } 

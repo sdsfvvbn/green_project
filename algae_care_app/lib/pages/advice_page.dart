@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/advice_services.dart' as services;
-import '../pages/chart_widget.dart' as chart;
 import '../models/algae_log.dart' as models; // 使用 models 別名
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../services/database_service.dart' as db;
+import '../models/algae_profile.dart';
+import 'carbon_chart_widget.dart';
 
 class AdvicePage extends StatefulWidget {
   const AdvicePage({super.key});
@@ -16,15 +17,17 @@ class _AdvicePageState extends State<AdvicePage> {
   final services.AdviceService _adviceService = services.AdviceService();
   String _advice = '';
   double _carbonSequestration = 0.0;
-  List<double> _growthData = [];
   List<models.AlgaeLog> _allLogs = [];
   String? _selectedType;
   List<String> _allTypes = [];
+  List<AlgaeProfile> _profiles = [];
+  double _algaeVolume = 1.0;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadProfiles();
   }
 
   Future<void> _loadData() async {
@@ -41,29 +44,101 @@ class _AdvicePageState extends State<AdvicePage> {
     _refreshAnalysis();
   }
 
+  Future<void> _loadProfiles() async {
+    final profiles = await db.DatabaseService.instance.getAllProfiles();
+    setState(() {
+      _profiles = profiles;
+      // 計算藻類體積，取第一個profile的體積或預設值
+      if (profiles.isNotEmpty) {
+        _algaeVolume = profiles.first.waterVolume;
+      }
+    });
+  }
+
   Future<void> _refreshAnalysis() async {
-    // 根據選擇的品種過濾資料
     final filteredLogs = _selectedType == null
         ? _allLogs
         : _allLogs.where((log) => (log.type ?? '未知品種') == _selectedType).toList();
-    // 直接呼叫 Gemini AI
+
+    // 計算趨勢和異常值
+    double avgTemp = 0;
+    double avgPH = 0;
+    if (filteredLogs.isNotEmpty) {
+      avgTemp = filteredLogs.map((e) => e.temperature).reduce((a, b) => a + b) / filteredLogs.length;
+      avgPH = filteredLogs.map((e) => e.pH).reduce((a, b) => a + b) / filteredLogs.length;
+    }
+
     final model = GenerativeModel(
       model: 'gemini-1.5-flash',
       apiKey: 'AIzaSyCVMw2sPOKUga72FlhBlaN4ekd4EFqvN-0',
     );
-    String prompt = '以下是我的海藻日誌資料：\n';
+
+    String prompt = '''
+以下是我的微藻養殖日誌資料，請分析並給出專業建議：
+
+日誌記錄：
+''';
+
+    // 添加每日記錄
     for (var log in filteredLogs) {
-      prompt += '日期:  {log.date}, 溫度:  {log.temperature}, 水色:  {log.waterColor}, 品種:  {log.type}\n';
+      prompt += '''
+日期: ${log.date}
+- 溫度: ${log.temperature}°C
+- pH值: ${log.pH}
+- 水色: ${log.waterColor}
+- 品種: ${log.type ?? '未知品種'}
+- 光照時間: ${log.lightHours}小時
+- 是否換水: ${log.isWaterChanged ? '是' : '否'}
+- 是否施肥: ${log.isFertilized ? '是' : '否'}
+- 備註: ${log.notes ?? '無'}
+''';
     }
-    prompt += '請根據這些資料給我一個養殖建議。';
+
+    // 添加統計資訊
+    prompt += '''
+統計資訊：
+- 平均溫度: ${avgTemp.toStringAsFixed(1)}°C
+- 平均pH值: ${avgPH.toStringAsFixed(1)}
+- 記錄天數: ${filteredLogs.length}天
+
+參考範圍：
+- 適宜溫度：20-30°C
+- 適宜pH值：6.5-8.5
+- 建議光照：8-12小時/天
+
+請根據以上資料分析：
+1. 目前養殖狀況是否正常？
+2. 有哪些需要注意或改善的地方？
+3. 對於未來養殖有什麼建議？
+4. 如果有異常數據，請指出並給出改善建議。
+''';
+
     final response = await model.generateContent([Content.text(prompt)]);
     final advice = response.text ?? '無法取得建議';
-    final carbon = await _adviceService.calculateCarbonSequestration(filteredLogs);
-    final growth = await _adviceService.getGrowthData(filteredLogs);
-    setState(() {
+    // 計算吸碳量（根據 log.type 去 profile 找體積）
+    double carbon = 0;
+    for (var log in filteredLogs) {
+      final profile = _profiles.firstWhere(
+        (p) => p.species == (log.type ?? ''),
+        orElse: () => AlgaeProfile(
+          id: null,
+          species: log.type ?? '',
+          name: null,
+          startDate: DateTime(2020, 1, 1),
+          length: 1.0,
+          width: 1.0,
+          waterSource: '',
+          lightType: '',
+          waterChangeFrequency: 7,
+          waterVolume: 1.0,
+          fertilizerType: '',
+        ),
+      );
+      carbon += profile.waterVolume * 2 / 365;
+    }
+        setState(() {
       _advice = advice;
       _carbonSequestration = carbon;
-      _growthData = growth;
     });
   }
 
@@ -121,7 +196,7 @@ class _AdvicePageState extends State<AdvicePage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _advice.isEmpty ? '正在生成建議...' : _advice,
+                        _advice.replaceAll(RegExp(r'[*#`>-]'), ''),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -192,32 +267,13 @@ class _AdvicePageState extends State<AdvicePage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '成長曲線',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.green[800],
-                                fontWeight: FontWeight.bold,
-                              ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 200, // 你可以根據需求調整高度
-                        child: chart.GrowthChartWidget(data: _growthData),
-                      ),
-                    ],
+              // 吸碳量折線圖
+              _allLogs.isEmpty
+                ? const Center(child: Text('尚無日誌資料，無法顯示吸碳量圖表'))
+                : CarbonChartWidget(
+                    logs: _allLogs,
+                    algaeVolume: _algaeVolume,
                   ),
-                ),
-              ),
             ],
           ),
         ),

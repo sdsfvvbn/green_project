@@ -10,6 +10,9 @@ class AlgaeLog {
   final String? type;
   final bool isWaterChanged;
   final DateTime? nextWaterChangeDate;
+  final bool isFertilized;
+  final DateTime? nextFertilizeDate;
+  final double? waterVolume;
 
   AlgaeLog({
     this.id,
@@ -23,6 +26,9 @@ class AlgaeLog {
     this.type,
     this.isWaterChanged = false,
     this.nextWaterChangeDate,
+    this.isFertilized = false,
+    this.nextFertilizeDate,
+    this.waterVolume,
   });
 
   Map<String, dynamic> toMap() {
@@ -38,6 +44,9 @@ class AlgaeLog {
       'type': type,
       'isWaterChanged': isWaterChanged ? 1 : 0,
       'nextWaterChangeDate': nextWaterChangeDate?.toIso8601String(),
+      'isFertilized': isFertilized ? 1 : 0,
+      'nextFertilizeDate': nextFertilizeDate?.toIso8601String(),
+      'waterVolume': waterVolume,
     };
   }
 
@@ -54,6 +63,9 @@ class AlgaeLog {
       type: map['type'],
       isWaterChanged: (map['isWaterChanged'] ?? 0) == 1,
       nextWaterChangeDate: map['nextWaterChangeDate'] != null ? DateTime.parse(map['nextWaterChangeDate']) : null,
+      isFertilized: (map['isFertilized'] ?? 0) == 1,
+      nextFertilizeDate: map['nextFertilizeDate'] != null ? DateTime.parse(map['nextFertilizeDate']) : null,
+      waterVolume: map['waterVolume'] != null ? (map['waterVolume'] is int ? (map['waterVolume'] as int).toDouble() : map['waterVolume'] as double) : null,
     );
   }
 
@@ -69,6 +81,9 @@ class AlgaeLog {
     String? type,
     bool? isWaterChanged,
     DateTime? nextWaterChangeDate,
+    bool? isFertilized,
+    DateTime? nextFertilizeDate,
+    double? waterVolume,
   }) {
     return AlgaeLog(
       id: id ?? this.id,
@@ -82,6 +97,9 @@ class AlgaeLog {
       type: type ?? this.type,
       isWaterChanged: isWaterChanged ?? this.isWaterChanged,
       nextWaterChangeDate: nextWaterChangeDate ?? this.nextWaterChangeDate,
+      isFertilized: isFertilized ?? this.isFertilized,
+      nextFertilizeDate: nextFertilizeDate ?? this.nextFertilizeDate,
+      waterVolume: waterVolume ?? this.waterVolume,
     );
   }
 } 

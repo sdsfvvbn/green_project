@@ -153,67 +153,90 @@ class _LogListPageState extends State<LogListPage> {
         ),
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          '日誌紀錄',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-        ),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
-        elevation: 6,
-        centerTitle: true,
-        leading: Icon(Icons.book, size: 28),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, size: 26),
-            tooltip: '新增日誌',
-            onPressed: () => _navigateToForm(),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(true);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            '日誌紀錄',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1.2),
           ),
-        ],
-      ),
-      body: FutureBuilder<List<AlgaeLog>>(
-        future: _logsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('發生錯誤: \\${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('開始記錄'),
-                    onPressed: () => _navigateToForm(),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            final logs = snapshot.data!;
-            return PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
+          backgroundColor: Colors.green[700],
+          foregroundColor: Colors.white,
+          elevation: 6,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, size: 28),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.calendar_today, size: 26),
+              tooltip: '切換到日曆',
+              onPressed: () {
+                _pageController.animateToPage(
+                  1, // 日曆頁在 PageView 的第二頁
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                );
               },
-              children: [
-                _buildGroupedList(logs),
-                _buildCalendar(logs),
-              ],
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToForm(),
-        child: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        body: GestureDetector(
+          onHorizontalDragEnd: (details) {
+            if (details.primaryVelocity! > 0) {
+              // 從左往右滑動，返回首頁
+              Navigator.of(context).pop(true);
+            }
+          },
+          child: FutureBuilder<List<AlgaeLog>>(
+            future: _logsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('發生錯誤: \\${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('沒有歷史紀錄\n開始記錄養殖日記吧！', textAlign: TextAlign.center, style: TextStyle(fontSize: 20)),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('開始記錄'),
+                        onPressed: () => _navigateToForm(),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                final logs = snapshot.data!;
+                return PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  children: [
+                    _buildGroupedList(logs),
+                    _buildCalendar(logs),
+                  ],
+                );
+              }
+            },
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _navigateToForm(),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -307,14 +330,14 @@ class _LogListPageState extends State<LogListPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.science, color: Colors.purple[400], size: 18),
-                                      Text('pH：${log.pH}'),
+                                      Text('pH：${log.pH.toStringAsFixed(1)}'),
                                     ],
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.wb_sunny, color: Colors.yellow[700], size: 18),
-                                      Text('光照：${log.lightHours}'),
+                                      Text('光照：${log.lightHours.toStringAsFixed(1)}'),
                                     ],
                                   ),
                                   if (log.isWaterChanged)
@@ -326,6 +349,16 @@ class _LogListPageState extends State<LogListPage> {
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Text('換水', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ),
+                                  if (log.isFertilized)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text('施肥', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
                                     ),
                                 ],
                               ),
@@ -390,6 +423,19 @@ class _LogListPageState extends State<LogListPage> {
       }
     }
     
+    // 日曆事件也顯示下次施肥
+    final Map<DateTime, List<AlgaeLog>> scheduledFertilize = {};
+    for (final log in logs) {
+      if (log.nextFertilizeDate != null) {
+        final scheduledKey = DateTime(
+          log.nextFertilizeDate!.year,
+          log.nextFertilizeDate!.month,
+          log.nextFertilizeDate!.day,
+        );
+        scheduledFertilize.putIfAbsent(scheduledKey, () => []).add(log);
+      }
+    }
+
     return TableCalendar<AlgaeLog>(
       firstDay: DateTime(2020, 1, 1),
       lastDay: DateTime(2100, 12, 31),
@@ -406,8 +452,9 @@ class _LogListPageState extends State<LogListPage> {
         });
         final logsForDay = logMap[DateTime(selected.year, selected.month, selected.day)] ?? [];
         final scheduledForDay = scheduledWaterChanges[DateTime(selected.year, selected.month, selected.day)] ?? [];
+        final scheduledFertilizeForDay = scheduledFertilize[DateTime(selected.year, selected.month, selected.day)] ?? [];
         
-        if (logsForDay.isNotEmpty || scheduledForDay.isNotEmpty) {
+        if (logsForDay.isNotEmpty || scheduledForDay.isNotEmpty || scheduledFertilizeForDay.isNotEmpty) {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
@@ -442,9 +489,9 @@ class _LogListPageState extends State<LogListPage> {
                                   Chip(label: Text('水色: ${log.waterColor}')),
                                   Chip(label: Text('種類: ${log.type ?? ''}')),
                                   if (log.isWaterChanged) Chip(label: const Text('換水'), backgroundColor: Colors.blue[100]),
-                                  Chip(label: Text('pH: ${log.pH}')),
+                                  Chip(label: Text('pH: ${log.pH.toStringAsFixed(1)}')),
                                   Chip(label: Text('溫度: ${log.temperature}°C')),
-                                  Chip(label: Text('光照: ${log.lightHours}')),
+                                  Chip(label: Text('光照: ${log.lightHours.toStringAsFixed(1)}')),
                                 ],
                               ),
                               if (log.notes != null && log.notes!.isNotEmpty)
@@ -485,6 +532,12 @@ class _LogListPageState extends State<LogListPage> {
                           ),
                         )).toList(),
                       ],
+                      if (scheduledFertilizeForDay.isNotEmpty) ...[
+                        if (logsForDay.isNotEmpty || scheduledForDay.isNotEmpty) const SizedBox(height: 16),
+                        const Text('預計施肥:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+                        const SizedBox(height: 8),
+                        ...scheduledFertilizeForDay.map((log) => Chip(label: const Text('施肥'), backgroundColor: Colors.orangeAccent)),
+                      ],
                     ],
                   ),
                 ),
@@ -503,9 +556,11 @@ class _LogListPageState extends State<LogListPage> {
         defaultBuilder: (context, day, focusedDay) {
           final logsForDay = logMap[DateTime(day.year, day.month, day.day)] ?? [];
           final scheduledForDay = scheduledWaterChanges[DateTime(day.year, day.month, day.day)] ?? [];
+          final scheduledFertilizeForDay = scheduledFertilize[DateTime(day.year, day.month, day.day)] ?? [];
           final hasLog = logsForDay.isNotEmpty;
           final hasWaterChange = hasLog && logsForDay.any((log) => log.isWaterChanged);
           final hasScheduledWaterChange = scheduledForDay.isNotEmpty;
+          final hasScheduledFertilize = scheduledFertilizeForDay.isNotEmpty;
           
           return Stack(
             children: [
@@ -545,6 +600,16 @@ class _LogListPageState extends State<LogListPage> {
                     Icons.schedule, 
                     color: Colors.orange[600], 
                     size: 12,
+                  ),
+                ),
+              if (hasScheduledFertilize)
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Icon(
+                    Icons.science,
+                    color: Colors.orange,
+                    size: 20,
                   ),
                 ),
             ],

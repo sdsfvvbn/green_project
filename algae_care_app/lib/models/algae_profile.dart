@@ -2,7 +2,7 @@ class AlgaeProfile {
   int? id;
   String species;
   String? name;
-  int ageDays;
+  DateTime startDate;
   double length;
   double width;
   String waterSource;
@@ -18,7 +18,7 @@ class AlgaeProfile {
     this.id,
     required this.species,
     this.name,
-    required this.ageDays,
+    required this.startDate,
     required this.length,
     required this.width,
     required this.waterSource,
@@ -36,7 +36,7 @@ class AlgaeProfile {
       'id': id,
       'species': species,
       'name': name,
-      'ageDays': ageDays,
+      'startDate': startDate.toIso8601String(),
       'length': length,
       'width': width,
       'waterSource': waterSource,
@@ -55,7 +55,7 @@ class AlgaeProfile {
       id: map['id'] as int?,
       species: map['species'] as String,
       name: map['name'] as String?,
-      ageDays: map['ageDays'] as int,
+      startDate: DateTime.parse(map['startDate'] as String),
       length: map['length'] is int ? (map['length'] as int).toDouble() : map['length'] as double,
       width: map['width'] is int ? (map['width'] as int).toDouble() : map['width'] as double,
       waterSource: map['waterSource'] as String,

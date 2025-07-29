@@ -6,6 +6,7 @@ import 'package:algae_care_app/services/database_service.dart';
 // import 'package:algae_care_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
+import '../models/algae_profile.dart';
 
 class LogFormPage extends StatefulWidget {
   final int? logId; // 若有 logId 則為編輯，否則為新增
@@ -28,10 +29,13 @@ class _LogFormPageState extends State<LogFormPage> {
   String? _type;
   String? _customType;
   bool _isWaterChanged = false;
+  bool _isFertilized = false;
   String? _customWaterColor;
   DateTime? _nextWaterChangeDate;
+  DateTime? _nextFertilizeDate;
   List<File> _images = []; // 新增：多圖
   List<String> _actions = []; // 新增：多種操作標記
+  List<AlgaeProfile> _profiles = [];
 
   // 1. 新增光照、溫度、pH的狀態變數
   int _lightHour = 0;
@@ -42,12 +46,20 @@ class _LogFormPageState extends State<LogFormPage> {
   @override
   void initState() {
     super.initState();
+    _loadProfiles();
     if (widget.logId != null) {
       _loadLogData(widget.logId!);
     }
     _phValue = null;
     _type = null;
     _isWaterChanged = false;
+  }
+
+  Future<void> _loadProfiles() async {
+    final profiles = await DatabaseService.instance.getAllProfiles();
+    setState(() {
+      _profiles = profiles;
+    });
   }
 
   Future<void> _loadLogData(int logId) async {
@@ -64,7 +76,10 @@ class _LogFormPageState extends State<LogFormPage> {
         _phValue = log.pH;
         _notes = log.notes;
         _isWaterChanged = log.isWaterChanged;
+        _isFertilized = log.isFertilized;
         _nextWaterChangeDate = log.nextWaterChangeDate;
+        _nextFertilizeDate = log.nextFertilizeDate;
+        // _selectedProfileId = log.profileId; // 刪除 profileId 賦值
         if (log.photoPath != null && log.photoPath!.isNotEmpty) {
           _image = File(log.photoPath!);
         }
@@ -85,6 +100,7 @@ class _LogFormPageState extends State<LogFormPage> {
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      locale: const Locale('zh', 'TW'), // 設定為繁體中文
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -140,6 +156,11 @@ class _LogFormPageState extends State<LogFormPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // 新增：選擇微藻 profile
+              // 刪除 _profiles.isNotEmpty 判斷
+              // 刪除 DropdownButtonFormField<int> 所屬微藻下拉選單
+              // 刪除 _profiles.isEmpty 判斷
+              // 刪除 const Text('請先建立微藻資料', style: TextStyle(color: Colors.red))
               ListTile(
                 title: Text(
                   '日期：${_selectedDate != null ? _selectedDate!.year.toString().padLeft(4, '0') + '-' + _selectedDate!.month.toString().padLeft(2, '0') + '-' + _selectedDate!.day.toString().padLeft(2, '0') : ''}',
@@ -322,14 +343,11 @@ class _LogFormPageState extends State<LogFormPage> {
                     builder: (ctx) {
                       return SizedBox(
                         height: 250,
-                        child: ListWheelScrollView.useDelegate(
+                        child: CupertinoPicker(
                           itemExtent: 40,
+                          scrollController: FixedExtentScrollController(initialItem: _temperatureValue),
                           onSelectedItemChanged: (v) => temp = v,
-                          controller: FixedExtentScrollController(initialItem: _temperatureValue),
-                          childDelegate: ListWheelChildBuilderDelegate(
-                            builder: (ctx, idx) => idx <= 50 ? Center(child: Text('$idx °C')) : null,
-                            childCount: 51,
-                          ),
+                          children: List.generate(41, (idx) => Center(child: Text('$idx °C'))),
                         ),
                       );
                     },
@@ -369,51 +387,134 @@ class _LogFormPageState extends State<LogFormPage> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.green[100]!),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Checkbox(
-                      value: _isWaterChanged,
-                      onChanged: (val) async {
-                        setState(() => _isWaterChanged = val ?? false);
-                        if (val == true) {
-                          await _pickNextWaterChangeDate(context);
-                        } else {
-                          setState(() {
-                            _nextWaterChangeDate = null;
-                          });
-                        }
-                      },
-                    ),
-                    const Text('今日有換水', style: TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    if (_isWaterChanged && _nextWaterChangeDate != null)
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _pickNextWaterChangeDate(context),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            margin: const EdgeInsets.only(left: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.blue[200]!),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.water_drop, color: Colors.blue[600], size: 18),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '下次換水: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
-                                  style: TextStyle(color: Colors.blue[700], fontWeight: FontWeight.w500, fontSize: 14),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.edit, size: 16, color: Colors.blue),
-                              ],
-                            ),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _isWaterChanged,
+                          activeColor: Colors.green,
+                          checkColor: Colors.white,
+                          onChanged: (val) async {
+                            setState(() => _isWaterChanged = val ?? false);
+                            if (val == true) {
+                              await _pickNextWaterChangeDate(context);
+                            } else {
+                              setState(() {
+                                _nextWaterChangeDate = null;
+                              });
+                            }
+                          },
+                        ),
+                        Text(
+                          '今日有換水',
+                          style: TextStyle(
+                            fontSize: 16,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        if (_isWaterChanged && _nextWaterChangeDate != null)
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () => _pickNextWaterChangeDate(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                margin: const EdgeInsets.only(left: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.blue[200]!),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.water_drop, color: Colors.blue[600], size: 18),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        '下次換水: ${_nextWaterChangeDate!.toLocal().toString().split(' ')[0]}',
+                                        style: TextStyle(color: Colors.blue[700], fontWeight: FontWeight.w500, fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.edit, size: 16, color: Colors.blue),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _isFertilized,
+                          activeColor: Colors.orange,
+                          checkColor: Colors.white,
+                          onChanged: (val) {
+                            setState(() => _isFertilized = val ?? false);
+                            if (val == true && _nextFertilizeDate == null) {
+                              _nextFertilizeDate = DateTime.now().add(const Duration(days: 7));
+                            }
+                            if (val == false) {
+                              _nextFertilizeDate = null;
+                            }
+                          },
+                        ),
+                        Text(
+                          '今日有施肥',
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (_isFertilized && _nextFertilizeDate != null)
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _nextFertilizeDate ?? DateTime.now().add(const Duration(days: 7)),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _nextFertilizeDate = picked;
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                margin: const EdgeInsets.only(left: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.orange[200]!),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.science, color: Colors.orange[600], size: 18),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        '下次施肥: ${_nextFertilizeDate!.toLocal().toString().split(' ')[0]}',
+                                        style: TextStyle(color: Colors.orange[700], fontWeight: FontWeight.w500, fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.edit, size: 16, color: Colors.orange),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -502,6 +603,25 @@ class _LogFormPageState extends State<LogFormPage> {
                               builder: (context) => const Center(child: CircularProgressIndicator()),
                             );
                             _formKey.currentState!.save();
+                            // 根據 _type 找到對應 profile 的 waterVolume
+                            double? waterVolume;
+                            final profile = _profiles.firstWhere(
+                              (p) => p.species == (_type == '其他' ? _customType : _type),
+                              orElse: () => AlgaeProfile(
+                                id: null,
+                                species: _type == '其他' ? _customType ?? '' : _type ?? '',
+                                name: null,
+                                startDate: DateTime(2020, 1, 1),
+                                length: 1.0,
+                                width: 1.0,
+                                waterSource: '',
+                                lightType: '',
+                                waterChangeFrequency: 7,
+                                waterVolume: 1.0,
+                                fertilizerType: '',
+                              ),
+                            );
+                            waterVolume = profile.waterVolume ?? 1.0;
                             // 儲存時要把這三個欄位的值正確存進 AlgaeLog
                             final log = AlgaeLog(
                               id: widget.logId,
@@ -515,6 +635,9 @@ class _LogFormPageState extends State<LogFormPage> {
                               type: _type == '其他' ? _customType : _type,
                               isWaterChanged: _isWaterChanged,
                               nextWaterChangeDate: _isWaterChanged ? _nextWaterChangeDate : null,
+                              isFertilized: _isFertilized,
+                              nextFertilizeDate: _isFertilized ? _nextFertilizeDate : null,
+                              waterVolume: waterVolume,
                             );
                             final existLog = await DatabaseService.instance.getLogByDate(log.date);
                             Navigator.of(context).pop(); // 關閉 loading
@@ -522,8 +645,8 @@ class _LogFormPageState extends State<LogFormPage> {
                               final shouldOverwrite = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text('覆蓋提醒'),
-                                  content: const Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
+                                  title: Text('覆蓋提醒'),
+                                  content: Text('這一天已經有日誌，儲存會覆蓋原本的內容，確定要繼續嗎？'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(ctx, false),
@@ -531,7 +654,7 @@ class _LogFormPageState extends State<LogFormPage> {
                                     ),
                                     ElevatedButton(
                                       onPressed: () => Navigator.pop(ctx, true),
-                                      child: const Text('覆蓋'),
+                                      child: Text('覆蓋', style: TextStyle(color: Colors.green)),
                                     ),
                                   ],
                                 ),
@@ -562,7 +685,7 @@ class _LogFormPageState extends State<LogFormPage> {
                         } catch (e) {
                           print('儲存失敗: $e');
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('儲存失敗: $e')),
+                            SnackBar(content: Text('儲存失敗: $e', style: TextStyle(color: Colors.black87))),
                           );
                         }
                       },
@@ -582,33 +705,6 @@ class _LogFormPageState extends State<LogFormPage> {
                       },
                       child: const Text('取消'),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // 操作標記多選
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('換水'),
-                    selected: _actions.contains('換水'),
-                    onSelected: (v) => setState(() => v ? _actions.add('換水') : _actions.remove('換水')),
-                  ),
-                  FilterChip(
-                    label: const Text('加光'),
-                    selected: _actions.contains('加光'),
-                    onSelected: (v) => setState(() => v ? _actions.add('加光') : _actions.remove('加光')),
-                  ),
-                  FilterChip(
-                    label: const Text('加肥'),
-                    selected: _actions.contains('加肥'),
-                    onSelected: (v) => setState(() => v ? _actions.add('加肥') : _actions.remove('加肥')),
-                  ),
-                  FilterChip(
-                    label: const Text('其他'),
-                    selected: _actions.contains('其他'),
-                    onSelected: (v) => setState(() => v ? _actions.add('其他') : _actions.remove('其他')),
                   ),
                 ],
               ),
