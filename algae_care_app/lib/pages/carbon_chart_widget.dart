@@ -57,11 +57,23 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     final days = lastDate.difference(firstDate).inDays + 1;
     // 2. 產生所有日期
     final allDays = List<DateTime>.generate(days, (i) => firstDate.add(Duration(days: i)));
-    // 3. 取得日誌的濃度資料
+    // 3. 取得日誌的濃度資料（根據水色自動給定預設濃度）
     Map<DateTime, double> logConMap = {};
     for (var log in sortedLogs) {
-      if (log.concentration != null) {
-        logConMap[DateTime(log.date.year, log.date.month, log.date.day)] = log.concentration!;
+      double? con = log.concentration;
+      if (con == null) {
+        // 根據水色給預設值
+        String color = log.waterColor;
+        if (color == '淡綠色') {
+          con = 0.1;
+        } else if (color == '綠色') {
+          con = 0.5;
+        } else if (color == '藍綠色') {
+          con = 1.0;
+        }
+      }
+      if (con != null) {
+        logConMap[DateTime(log.date.year, log.date.month, log.date.day)] = con;
       }
     }
     // 4. 簡化的濃度模擬 - 不依賴實際濃度數據
@@ -80,10 +92,12 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     }
     // 7. 聚合資料（日/月/年）
     List<FlSpot> spots = [];
+    List<double> cumulativeList = [];
     if (widget.viewMode == 'day') {
       double cumulative = 0;
       for (int i = 0; i < simCarbon.length; i++) {
         cumulative += simCarbon[i];
+        cumulativeList.add(cumulative);
         spots.add(FlSpot(i.toDouble(), cumulative));
       }
     } else if (widget.viewMode == 'month') {
@@ -96,6 +110,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
       double cumulative = 0;
       for (var entry in monthMap.entries) {
         cumulative += entry.value;
+        cumulativeList.add(cumulative);
         spots.add(FlSpot(idx.toDouble(), cumulative));
         idx++;
       }
@@ -109,6 +124,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
       double cumulative = 0;
       for (var entry in yearMap.entries) {
         cumulative += entry.value;
+        cumulativeList.add(cumulative);
         spots.add(FlSpot(idx.toDouble(), cumulative));
         idx++;
       }
@@ -117,9 +133,9 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     setState(() {
       _allDays = allDays;
       _concentrationSim = simCon;
-      _carbonSim = simCarbon;
+      _carbonSim = cumulativeList; // 這裡改成累積值
       // 計算累積總量
-      _totalCO2 = simCarbon.isNotEmpty ? simCarbon.reduce((a, b) => a + b) : 0;
+      _totalCO2 = cumulativeList.isNotEmpty ? cumulativeList.last : 0;
     });
     if (widget.onTotalChanged != null) {
       widget.onTotalChanged!(_totalCO2);
