@@ -15,7 +15,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+  // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []); // 移除這行，恢復狀態列
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent, // 狀態列透明
+    statusBarIconBrightness: Brightness.dark, // 狀態列圖示深色
+  ));
   
   // 桌面平台才初始化 FFI
   if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.windows ||
