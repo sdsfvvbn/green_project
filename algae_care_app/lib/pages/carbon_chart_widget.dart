@@ -106,17 +106,37 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     List<FlSpot> spots = [];
     List<String> xLabels = [];
     if (widget.viewMode == 'day') {
-      // 只顯示最近30天
-      int showDays = 30;
-      int totalDays = cumulativeCarbon.length;
-      int startIdx = totalDays > showDays ? totalDays - showDays : 0;
-      int interval = (showDays > 6) ? 5 : 1;
-      for (int i = startIdx; i < cumulativeCarbon.length; i++) {
-        if ((i - startIdx) % interval == 0 || i == cumulativeCarbon.length - 1) {
-          spots.add(FlSpot((i - startIdx).toDouble(), cumulativeCarbon[i]));
-          xLabels.add(DateFormat('MM/dd').format(allDays[i]));
+      DateTime today = DateTime.now();
+      DateTime firstDate = allDays.isNotEmpty ? allDays.first : today;
+      int diffDays = today.difference(firstDate).inDays + 1;
+      int showDays = diffDays < 30 ? diffDays : 30;
+      List<DateTime> showDayList = List.generate(showDays, (i) => today.subtract(Duration(days: showDays - 1 - i)));
+      List<double> showCumulative = [];
+      double lastValue = 0;
+      for (int i = 0; i < showDayList.length; i++) {
+        DateTime d = showDayList[i];
+        int idx = allDays.indexWhere((ad) => ad.year == d.year && ad.month == d.month && ad.day == d.day);
+        if (idx != -1) {
+          lastValue = cumulativeCarbon[idx];
+        }
+        showCumulative.add(lastValue);
+      }
+      int interval = 5;
+      for (int i = 0; i < showDayList.length; i++) {
+        if (i % interval == 0 || i == showDayList.length - 1) {
+          xLabels.add(DateFormat('MM/dd').format(showDayList[i]));
         }
       }
+      setState(() {
+        _allDays = showDayList;
+        _concentrationSim = simCon;
+        _carbonSim = showCumulative;
+        _totalCO2 = showCumulative.isNotEmpty ? showCumulative.last : 0;
+      });
+      if (widget.onTotalChanged != null) {
+        widget.onTotalChanged!(_totalCO2);
+      }
+      return;
     } else if (widget.viewMode == 'month') {
       Map<String, double> monthMap = {};
       for (int i = 0; i < allDays.length; i++) {
