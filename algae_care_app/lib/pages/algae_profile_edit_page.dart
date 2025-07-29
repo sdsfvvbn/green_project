@@ -271,6 +271,15 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                 decoration: const InputDecoration(
                   labelText: '光照強度 *',
                   prefixIcon: Icon(Icons.light_mode),
+                  contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      border: UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 1),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.green, width: 2),
+                      ),
+                    ),
                 ),
                 items: const [
                   DropdownMenuItem(value: '強光', child: Text('強光')),
