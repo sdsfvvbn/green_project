@@ -30,12 +30,7 @@ class _AdvicePageState extends State<AdvicePage> {
     super.initState();
     _loadData();
     _loadProfiles();
-    // 新增：進入頁面時自動彈出選擇藻類Dialog
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_selectedProfile == null && _profiles.isNotEmpty) {
-        _showProfileSelectDialog();
-      }
-    });
+    // 移除 initState 內的 showProfileSelectDialog 呼叫
   }
 
   void _showProfileSelectDialog() async {
@@ -93,6 +88,12 @@ class _AdvicePageState extends State<AdvicePage> {
         _algaeVolume = profiles.first.waterVolume;
       }
     });
+    // 新增：載入完成後再判斷是否要彈窗
+    if (mounted && _profiles.isNotEmpty && _selectedProfile == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showProfileSelectDialog();
+      });
+    }
     // 在setState之後載入對應的日誌
     if (profiles.isNotEmpty) {
       _loadLogsForProfile(profiles.first);
