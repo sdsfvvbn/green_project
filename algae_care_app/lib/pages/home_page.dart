@@ -23,9 +23,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late final DatabaseService _databaseService;
-  late final AchievementService _achievementService;
-  List<AlgaeLog>? _logs;
+  final DatabaseService _databaseService = DatabaseService.instance;
+  final AchievementService _achievementService = AchievementService.instance;
+  List<AlgaeLog> _logs = [];
+  double _totalCO2 = 0;
   double _algaeVolume = 1.0;
   int _logDays = 1;
   double get _monthCO2 {
@@ -121,8 +122,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _currentFact = (facts..shuffle()).first;
-    _databaseService = DatabaseService.instance;
-    _achievementService = AchievementService.instance;
     _loadLogs(); // 載入所有日誌
     _loadAlgaeSettings();
     _loadLogDays();
@@ -132,13 +131,16 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadLogs() async {
     final logs = await _databaseService.getAllLogs();
-    print('getAllLogs 回傳: ${logs.length} 筆');
+    double totalCO2 = 0;
     for (var log in logs) {
-      print('log: ${log.toMap()}');
+      // 計算每一筆日誌的吸碳量（與 CarbonChartWidget 相同邏輯）
+      double dailyCO2 = (log.waterVolume ?? 1.0) * 10; // 單位：g
+      totalCO2 += dailyCO2;
     }
     if (mounted) {
       setState(() {
         _logs = logs;
+        _totalCO2 = totalCO2;
       });
     }
   }
@@ -241,9 +243,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-
-
-
                 const SizedBox(height: 32),
                 // --- 知識小卡片移到這裡 ---
                 Card(
@@ -346,13 +345,13 @@ class _HomePageState extends State<HomePage> {
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharePage())),
                 ),
                 const SizedBox(height: 32),
-                const Text('今日任務：檢查水色、調整光照、拍照記錄', style: TextStyle(color: Colors.grey)),
+                Text('累積吸碳量：${_totalCO2 >= 1000 ? (_totalCO2 / 1000).toStringAsFixed(2) + ' kg' : _totalCO2.toInt().toString() + ' g'}'),
                 const SizedBox(height: 32),
               ],
             ),
           ),
         ),
-      
+
     );
   }
 
