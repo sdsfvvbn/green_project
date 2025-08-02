@@ -24,6 +24,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final DatabaseService _databaseService = DatabaseService.instance;
+  final AchievementService _achievementService = AchievementService.instance;
   List<AlgaeLog> _logs = [];
   double _totalCO2 = 0;
   double _algaeVolume = 1.0;
@@ -350,6 +351,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
+
     );
   }
 

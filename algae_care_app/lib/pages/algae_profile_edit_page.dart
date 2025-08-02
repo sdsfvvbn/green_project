@@ -280,7 +280,7 @@ class _AlgaeProfileEditPageState extends State<AlgaeProfileEditPage> {
                         borderSide: BorderSide(color: Colors.green, width: 2),
                       ),
                     ),
-                ),
+                
                 items: const [
                   DropdownMenuItem(value: '強光', child: Text('強光')),
                   DropdownMenuItem(value: '中光', child: Text('中光')),
