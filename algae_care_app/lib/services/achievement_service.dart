@@ -160,7 +160,8 @@ class AchievementService {
     final logs = await db.getAllLogs();
     final days = await db.getLogDays();
     final algaeVolume = prefs.getDouble('algae_volume') ?? 1.0;
-    final totalCO2 = algaeVolume * 2 * days / 365;
+    // 修正吸碳量計算，使用實際的日誌數量而不是 getLogDays()
+    final totalCO2 = algaeVolume * 2 * logs.length / 365;
 
     // 1. 首次日誌
     if (!await isAchievementUnlocked('first_log') && logs.isNotEmpty) {
@@ -178,12 +179,12 @@ class AchievementService {
       newlyUnlocked.add('log_30_days');
     }
     // 4. 首次換水
-    if (!await isAchievementUnlocked('first_water_change') && logs.any((log) => log.isWaterChanged == 1)) {
+    if (!await isAchievementUnlocked('first_water_change') && logs.any((log) => log.isWaterChanged == true)) {
       await unlockAchievement('first_water_change');
       newlyUnlocked.add('first_water_change');
     }
     // 5. 換水小能手
-    if (!await isAchievementUnlocked('log_water_change_5') && logs.where((log) => log.isWaterChanged == 1).length >= 5) {
+    if (!await isAchievementUnlocked('log_water_change_5') && logs.where((log) => log.isWaterChanged == true).length >= 5) {
       await unlockAchievement('log_water_change_5');
       newlyUnlocked.add('log_water_change_5');
     }
@@ -203,7 +204,7 @@ class AchievementService {
       newlyUnlocked.add('photo_10');
     }
     // 9. 施肥紀錄
-    if (!await isAchievementUnlocked('log_fertilize') && logs.any((log) => log.isFertilized == 1)) {
+    if (!await isAchievementUnlocked('log_fertilize') && logs.any((log) => log.isFertilized == true)) {
       await unlockAchievement('log_fertilize');
       newlyUnlocked.add('log_fertilize');
     }
@@ -263,12 +264,12 @@ class AchievementService {
   // 獲取所有成就狀態
   Future<List<Map<String, dynamic>>> getAllAchievements() async {
     final List<Map<String, dynamic>> result = [];
-    
+
     for (final entry in achievements.entries) {
       final achievementId = entry.key;
       final achievement = entry.value;
       final isUnlocked = await isAchievementUnlocked(achievementId);
-      
+
       result.add({
         'id': achievementId,
         'title': achievement['title'],
@@ -279,7 +280,7 @@ class AchievementService {
         'unlocked': isUnlocked,
       });
     }
-    
+
     return result;
   }
 
@@ -301,4 +302,4 @@ class AchievementService {
       await prefs.remove('achievement_$achievementId');
     }
   }
-} 
+}

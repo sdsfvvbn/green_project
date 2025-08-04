@@ -3,6 +3,7 @@ import '../services/advice_services.dart' as services;
 import '../models/algae_log.dart' as models; // 使用 models 別名
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../services/database_service.dart' as db;
+import '../services/achievement_service.dart';
 import '../models/algae_profile.dart';
 import 'carbon_chart_widget.dart';
 
@@ -168,31 +169,22 @@ class _AdvicePageState extends State<AdvicePage> {
 
     final response = await model.generateContent([Content.text(prompt)]);
     final advice = response.text ?? '無法取得建議';
-    // 計算吸碳量（根據 log.type 去 profile 找體積）
+    // 計算吸碳量（使用選擇的藻類體積和日誌數量）
     double carbon = 0;
-    for (var log in filteredLogs) {
-      final profile = _profiles.firstWhere(
-        (p) => p.species == (log.type ?? ''),
-        orElse: () => AlgaeProfile(
-          id: null,
-          species: log.type ?? '',
-          name: null,
-          startDate: DateTime(2020, 1, 1),
-          length: 1.0,
-          width: 1.0,
-          waterSource: '',
-          lightType: '',
-          waterChangeFrequency: 7,
-          waterVolume: 1.0,
-          fertilizerType: '',
-        ),
-      );
-      carbon += profile.waterVolume * 2 / 365;
+    if (_selectedProfile != null && filteredLogs.isNotEmpty) {
+      // 使用選擇的藻類體積，每公升水體每天約吸收 2g CO2
+      // 轉換為公斤/年
+      carbon = _selectedProfile!.waterVolume * 2 * filteredLogs.length / 1000;
+      // 同時更新 _algaeVolume 以保持一致性
+      _algaeVolume = _selectedProfile!.waterVolume;
     }
-        setState(() {
-      _advice = advice;
-      _carbonSequestration = carbon;
-    });
+                setState(() {
+          _advice = advice;
+          _carbonSequestration = carbon;
+        });
+
+        // 檢查吸碳量相關成就
+        await AchievementService.instance.checkAndUpdateAchievements();
   }
 
   @override
@@ -314,7 +306,7 @@ class _AdvicePageState extends State<AdvicePage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${_carbonSequestration.toStringAsFixed(2)} 公斤 CO₂/年',
+                        '${_carbonSequestration.toStringAsFixed(2)} 公斤 CO₂',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ],

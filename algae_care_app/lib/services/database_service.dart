@@ -160,7 +160,7 @@ class DatabaseService {
     }
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'algae_logs', 
+      'algae_logs',
       where: profileId != null ? 'profileId = ?' : 'profileId IS NULL',
       whereArgs: profileId != null ? [profileId] : null,
       orderBy: 'date DESC'

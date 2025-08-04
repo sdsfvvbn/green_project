@@ -92,7 +92,8 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
     // 6. 計算每日吸碳量
     List<double> dailyCarbon = [];
     for (int i = 0; i < simCon.length; i++) {
-      double dailyCO2 = widget.volume * 10; // 每日吸碳量 = 體積 * 10 g
+      // 每日吸碳量 = 體積(L) * 2g/L/天，轉換為克
+      double dailyCO2 = widget.volume * 2; // 每日吸碳量 = 體積 * 2 g
       dailyCarbon.add(dailyCO2);
     }
     // 7. 計算累積吸碳量
@@ -223,7 +224,7 @@ class _CarbonChartWidgetState extends State<CarbonChartWidget> {
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
-                        showTitles: true, 
+                        showTitles: true,
                         reservedSize: 40,
                         getTitlesWidget: (value, meta) {
                           String label;

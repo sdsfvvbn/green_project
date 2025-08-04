@@ -39,21 +39,21 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
     final prefs = await SharedPreferences.getInstance();
     final db = DatabaseService.instance;
     final achievementService = AchievementService.instance;
-    
+
     final logs = await db.getAllLogs();
     final days = await db.getLogDays();
-    
+
     // 檢查並更新成就狀態
     final newlyUnlocked = await achievementService.checkAndUpdateAchievements();
-    
+
     // 如果有新解鎖的成就，顯示通知
     if (newlyUnlocked.isNotEmpty) {
       _showAchievementUnlockedDialog(newlyUnlocked);
     }
-    
+
     // 獲取所有成就狀態
     final achievements = await achievementService.getAllAchievements();
-    
+
     setState(() {
       _algaeVolume = prefs.getDouble('algae_volume') ?? 1.0;
       _logDays = days > 0 ? days : 1;
@@ -66,7 +66,7 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
   void _showAchievementUnlockedDialog(List<String> newlyUnlocked) {
     final achievementService = AchievementService.instance;
     final achievement = achievementService.achievements[newlyUnlocked.first];
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -178,9 +178,9 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
       '知識': Colors.orange[700],
       '趣味': Colors.purple[700],
     };
-    
+
     final typeNames = ['基礎', '環保', '技術', '知識', '趣味'];
-    
+
     // 分組成就
     Map<String, List<Map<String, dynamic>>> grouped = {for (var t in typeNames) t: []};
     for (var a in _achievements) {
@@ -314,4 +314,4 @@ class _AchievementPageState extends State<AchievementPage> with SingleTickerProv
       ),
     );
   }
-} 
+}

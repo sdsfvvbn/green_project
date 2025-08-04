@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:algae_care_app/models/algae_log.dart';
 import 'package:algae_care_app/services/database_service.dart';
+import 'package:algae_care_app/services/achievement_service.dart';
 // import 'package:algae_care_app/services/notification_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/cupertino.dart';
@@ -76,6 +77,90 @@ class _LogFormPageState extends State<LogFormPage> {
     });
   }
 
+  // 顯示成就解鎖對話框
+  void _showAchievementUnlockedDialog(String achievementId) {
+    final achievement = AchievementService.instance.achievements[achievementId];
+    if (achievement == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _getIconData(achievement['icon']),
+              color: Colors.amber,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '🎉 成就解鎖！',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              achievement['title'],
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              achievement['detail'],
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('太棒了！'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'play_circle':
+        return Icons.play_circle;
+      case 'calendar_month':
+        return Icons.calendar_month;
+      case 'water_drop':
+        return Icons.water_drop;
+      case 'camera_alt':
+        return Icons.camera_alt;
+      case 'eco':
+        return Icons.eco;
+      case 'forest':
+        return Icons.forest;
+      case 'emoji_events':
+        return Icons.emoji_events;
+      case 'share':
+        return Icons.share;
+      case 'question_answer':
+        return Icons.question_answer;
+      case 'check_circle':
+        return Icons.check_circle;
+      case 'psychology':
+        return Icons.psychology;
+      case 'photo_camera':
+        return Icons.photo_camera;
+      case 'science':
+        return Icons.science;
+      case 'edit_note':
+        return Icons.edit_note;
+      case 'person':
+        return Icons.person;
+      case 'public':
+        return Icons.public;
+      default:
+        return Icons.star;
+    }
+  }
+
   Future<void> _loadLogData(int logId) async {
     final log = await DatabaseService.instance.getLog(logId);
     if (log != null) {
@@ -93,7 +178,7 @@ class _LogFormPageState extends State<LogFormPage> {
         _isFertilized = log.isFertilized;
         _nextWaterChangeDate = log.nextWaterChangeDate;
         _nextFertilizeDate = log.nextFertilizeDate;
-        
+
         // 根據 profileId 選擇對應的藻類資料
         if (log.profileId != null) {
           _selectedProfile = _profiles.firstWhere(
@@ -116,7 +201,7 @@ class _LogFormPageState extends State<LogFormPage> {
             ),
           );
         }
-        
+
         if (log.photoPath != null && log.photoPath!.isNotEmpty) {
           _image = File(log.photoPath!);
         }
@@ -732,27 +817,27 @@ class _LogFormPageState extends State<LogFormPage> {
                         try {
                           // 檢查必填欄位
                           List<String> missingFields = [];
-                          
+
                           if (_selectedProfile == null) {
                             missingFields.add('選擇藻類');
                           }
-                          
+
                           if (_selectedDate == null) {
                             missingFields.add('日期');
                           }
-                          
+
                           if (_type == null || _type!.isEmpty) {
                             missingFields.add('種類');
                           } else if (_type == '其他' && (_customType == null || _customType!.isEmpty)) {
                             missingFields.add('自訂種類');
                           }
-                          
+
                           if (_waterColor == null || _waterColor!.isEmpty) {
                             missingFields.add('水色');
                           } else if (_waterColor == '其他' && (_customWaterColor == null || _customWaterColor!.isEmpty)) {
                             missingFields.add('自訂水色');
                           }
-                          
+
                           if (missingFields.isNotEmpty) {
                             // 顯示必填欄位提醒視窗
                             showDialog(
@@ -793,7 +878,7 @@ class _LogFormPageState extends State<LogFormPage> {
                             );
                             return;
                           }
-                          
+
                           if (_formKey.currentState!.validate()) {
                             showDialog(
                               context: context,
@@ -860,10 +945,20 @@ class _LogFormPageState extends State<LogFormPage> {
                               );
                               if (shouldOverwrite == true) {
                                 await DatabaseService.instance.updateLog(log.copyWith(id: existLog.id));
+
+                                // 檢查並更新成就
+                                final newlyUnlocked = await AchievementService.instance.checkAndUpdateAchievements();
+
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('日誌已覆蓋')),
                                   );
+
+                                  // 如果有新解鎖的成就，顯示通知
+                                  if (newlyUnlocked.isNotEmpty) {
+                                    _showAchievementUnlockedDialog(newlyUnlocked.first);
+                                  }
+
                                   Navigator.of(context).pop();
                                 }
                               }
@@ -873,10 +968,20 @@ class _LogFormPageState extends State<LogFormPage> {
                               } else {
                                 await DatabaseService.instance.updateLog(log);
                               }
+
+                              // 檢查並更新成就
+                              final newlyUnlocked = await AchievementService.instance.checkAndUpdateAchievements();
+
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('日誌已儲存')),
                                 );
+
+                                // 如果有新解鎖的成就，顯示通知
+                                if (newlyUnlocked.isNotEmpty) {
+                                  _showAchievementUnlockedDialog(newlyUnlocked.first);
+                                }
+
                                 Navigator.of(context).pop();
                               }
                             }
