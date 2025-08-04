@@ -338,7 +338,7 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
 
   void _answer(int idx) async {
     if (_showResult) return;
-    
+
     _userAnswers.add(idx);
     setState(() {
       if (idx == _questions[_current]['answer']) {
@@ -350,11 +350,15 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
         _showResult = true;
       }
     });
-    
+
     // 在setState之後檢查成就
     if (_showResult && _score == _questions.length) {
-      // 解鎖成就
-      await _achievementService.unlockAchievement('quiz_master');
+      // 設置全對標記
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('quiz_all_correct', true);
+
+      // 檢查並更新成就
+      await _achievementService.checkAndUpdateAchievements();
       print('恭喜解鎖知識達人徽章！');
     }
   }
@@ -499,4 +503,4 @@ class _QuizGamePageState extends State<QuizGamePage> with SingleTickerProviderSt
       ),
     );
   }
-} 
+}

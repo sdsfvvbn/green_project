@@ -3,6 +3,7 @@
     package="com.example.algae_care_app">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application
         android:label="微藻照護"

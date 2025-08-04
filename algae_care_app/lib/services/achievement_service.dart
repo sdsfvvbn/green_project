@@ -121,13 +121,7 @@ class AchievementService {
       'type': '知識',
       'detail': '只要你遊玩5次挑戰小遊戲，就能獲得這個成就！'
     },
-    'profile_complete': {
-      'title': '個人檔案達人',
-      'desc': '完整填寫個人檔案',
-      'icon': 'person',
-      'type': '基礎',
-      'detail': '填寫暱稱、頭像、簡介，展現自我。'
-    },
+
     'log_with_note': {
       'title': '心得分享',
       'desc': '日誌含心得',
@@ -243,16 +237,7 @@ class AchievementService {
       await unlockAchievement('quiz_5_correct');
       newlyUnlocked.add('quiz_5_correct');
     }
-    // 17. 個人檔案達人
-    if (!await isAchievementUnlocked('profile_complete')) {
-      final nickname = prefs.getString('profile_nickname') ?? '';
-      final bio = prefs.getString('profile_bio') ?? '';
-      final avatar = prefs.getString('profile_avatar') ?? '';
-      if (nickname.isNotEmpty && bio.isNotEmpty && avatar.isNotEmpty) {
-        await unlockAchievement('profile_complete');
-        newlyUnlocked.add('profile_complete');
-      }
-    }
+
     // 18. 心得分享
     if (!await isAchievementUnlocked('log_with_note') && logs.any((log) => log.notes != null && log.notes!.trim().isNotEmpty)) {
       await unlockAchievement('log_with_note');

@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import '../services/achievement_service.dart';
 
@@ -52,10 +53,15 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
     _animController.forward(from: 0);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('share_achievement_unlocked', true);
-    
-    // 解鎖分享成就
-    await _achievementService.unlockAchievement('share_achievement');
-    
+
+    // 追蹤分享平台數量
+    int platformCount = prefs.getInt('share_platform_count') ?? 0;
+    platformCount++;
+    await prefs.setInt('share_platform_count', platformCount);
+
+    // 檢查並更新成就
+    await _achievementService.checkAndUpdateAchievements();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -83,34 +89,63 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
     );
   }
 
-  void _shareToLine(BuildContext context) {
-    final text = '我正在用「微藻養殖APP」養微藻、減碳救地球！本月吸碳量2.5kg，快來一起參與綠生活！#微藻 #減碳 #環保';
-    if (_imageFile != null) {
-      Share.shareXFiles([XFile(_imageFile!.path)], text: text);
-    } else {
-      Share.share(text);
+  Future<void> _shareContent() async {
+    final text = '我正在用「微藻養殖APP」養微藻、減碳救地球！本月吸碳量${badgeCount}kg，已解鎖${badgeCount}個成就徽章，快來一起參與綠生活！#微藻 #減碳 #環保 #永續發展';
+
+    try {
+      if (_imageFile != null) {
+        await Share.shareXFiles([XFile(_imageFile!.path)], text: text);
+      } else {
+        await Share.share(text);
+      }
+      _showSuccessDialog();
+    } catch (e) {
+      // 如果分享失敗，顯示錯誤訊息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('分享失敗：$e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    _showSuccessDialog();
   }
 
-  void _shareToIG(BuildContext context) {
-    final text = '我的微藻成果：本月吸碳2.5kg，已解鎖多項成就徽章！你也能輕鬆養微藻，加入綠色行動！#微藻 #個人化養殖 #永續';
-    if (_imageFile != null) {
-      Share.shareXFiles([XFile(_imageFile!.path)], text: text);
-    } else {
-      Share.share(text);
-    }
-    _showSuccessDialog();
-  }
+  Future<void> _shareToSpecificApp(String appType) async {
+    final text = '我正在用「微藻養殖APP」養微藻、減碳救地球！本月吸碳量${badgeCount}kg，已解鎖${badgeCount}個成就徽章！#微藻 #減碳 #環保';
+    final encodedText = Uri.encodeComponent(text);
 
-  void _shareToFB(BuildContext context) {
-    final text = '分享我的微藻養殖成果：已解鎖$badgeCount個成就徽章，為地球減碳盡一份心力！一起加入綠色生活！#微藻養殖 #環保 #永續發展';
-    if (_imageFile != null) {
-      Share.shareXFiles([XFile(_imageFile!.path)], text: text);
-    } else {
-      Share.share(text);
+    String url = '';
+    switch (appType) {
+      case 'line':
+        url = 'https://line.me/R/msg/text/?$encodedText';
+        break;
+      case 'instagram':
+        // Instagram 不支援直接文字分享，需要先分享到相簿
+        url = 'instagram://library?AssetPickerSourceType=1';
+        break;
+      case 'facebook':
+        url = 'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent('https://example.com')}&quote=$encodedText';
+        break;
+      case 'twitter':
+        url = 'https://twitter.com/intent/tweet?text=$encodedText';
+        break;
     }
-    _showSuccessDialog();
+
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        _showSuccessDialog();
+      } else {
+        // 如果無法開啟特定應用程式，使用通用分享
+        await _shareContent();
+      }
+    } catch (e) {
+      // 如果開啟失敗，使用通用分享
+      await _shareContent();
+    }
   }
 
   @override
@@ -171,28 +206,54 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                       ),
                     ),
                   ),
+                  // 主要分享按鈕
                   ElevatedButton.icon(
                     icon: const Icon(Icons.share),
-                    label: const Text('分享到 LINE'),
-                    onPressed: () => _shareToLine(context),
+                    label: const Text('分享成果'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[600],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _shareContent,
                   ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('分享到 Instagram'),
-                    onPressed: () => _shareToIG(context),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.facebook),
-                    label: const Text('分享到 Facebook'),
-                    onPressed: () => _shareToFB(context),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
+                  const SizedBox(height: 16),
+
+                  // 選擇照片按鈕
+                  OutlinedButton.icon(
                     icon: const Icon(Icons.photo_library),
                     label: const Text('選擇照片'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
                     onPressed: _pickImage,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 快速分享到特定應用程式
+                  const Text('快速分享到：', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        onPressed: () => _shareToSpecificApp('line'),
+                        icon: const Icon(Icons.chat_bubble, color: Colors.green),
+                        tooltip: '分享到 LINE',
+                      ),
+                      IconButton(
+                        onPressed: () => _shareToSpecificApp('facebook'),
+                        icon: const Icon(Icons.facebook, color: Colors.blue),
+                        tooltip: '分享到 Facebook',
+                      ),
+                      IconButton(
+                        onPressed: () => _shareToSpecificApp('twitter'),
+                        icon: const Icon(Icons.flutter_dash, color: Colors.lightBlue),
+                        tooltip: '分享到 Twitter',
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 32),
                   Card(
@@ -203,15 +264,15 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
                         children: [
                           Icon(Icons.lightbulb, color: Colors.blue[700]),
                           const SizedBox(height: 8),
-                          const Text(
-                            '分享小貼士',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '分享你的微藻成果，讓更多人了解微藻養殖的環保價值！每次分享都有機會獲得成就徽章。',
-                            textAlign: TextAlign.center,
-                          ),
+                                                     const Text(
+                             '分享小貼士',
+                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                           ),
+                           const SizedBox(height: 8),
+                           const Text(
+                             '點擊「分享成果」使用系統分享功能，或點擊下方圖標快速分享到特定應用程式。每次分享都有機會獲得成就徽章！',
+                             textAlign: TextAlign.center,
+                           ),
                         ],
                       ),
                     ),
@@ -224,4 +285,4 @@ class _SharePageState extends State<SharePage> with SingleTickerProviderStateMix
       ),
     );
   }
-} 
+}
