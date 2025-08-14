@@ -407,22 +407,22 @@ class _LogListPageState extends State<LogListPage> {
     // 依日期分組
     final Map<DateTime, List<AlgaeLog>> logMap = {};
     final Map<DateTime, List<AlgaeLog>> scheduledWaterChanges = {};
-    
+
     for (final log in logs) {
       final key = DateTime(log.date.year, log.date.month, log.date.day);
       logMap.putIfAbsent(key, () => []).add(log);
-      
+
       // 收集預計換水日期
       if (log.nextWaterChangeDate != null) {
         final scheduledKey = DateTime(
-          log.nextWaterChangeDate!.year, 
-          log.nextWaterChangeDate!.month, 
+          log.nextWaterChangeDate!.year,
+          log.nextWaterChangeDate!.month,
           log.nextWaterChangeDate!.day
         );
         scheduledWaterChanges.putIfAbsent(scheduledKey, () => []).add(log);
       }
     }
-    
+
     // 日曆事件也顯示下次施肥
     final Map<DateTime, List<AlgaeLog>> scheduledFertilize = {};
     for (final log in logs) {
@@ -453,7 +453,7 @@ class _LogListPageState extends State<LogListPage> {
         final logsForDay = logMap[DateTime(selected.year, selected.month, selected.day)] ?? [];
         final scheduledForDay = scheduledWaterChanges[DateTime(selected.year, selected.month, selected.day)] ?? [];
         final scheduledFertilizeForDay = scheduledFertilize[DateTime(selected.year, selected.month, selected.day)] ?? [];
-        
+
         if (logsForDay.isNotEmpty || scheduledForDay.isNotEmpty || scheduledFertilizeForDay.isNotEmpty) {
           showDialog(
             context: context,
@@ -561,7 +561,7 @@ class _LogListPageState extends State<LogListPage> {
           final hasWaterChange = hasLog && logsForDay.any((log) => log.isWaterChanged);
           final hasScheduledWaterChange = scheduledForDay.isNotEmpty;
           final hasScheduledFertilize = scheduledFertilizeForDay.isNotEmpty;
-          
+
           return Stack(
             children: [
               Container(
@@ -586,8 +586,8 @@ class _LogListPageState extends State<LogListPage> {
                 Positioned.fill(
                   child: Center(
                     child: Icon(
-                      Icons.water_drop, 
-                      color: Colors.blue.withOpacity(0.4), 
+                      Icons.water_drop,
+                      color: Colors.blue.withOpacity(0.4),
                       size: 28,
                     ),
                   ),
@@ -597,8 +597,8 @@ class _LogListPageState extends State<LogListPage> {
                   right: 2,
                   top: 2,
                   child: Icon(
-                    Icons.schedule, 
-                    color: Colors.orange[600], 
+                    Icons.schedule,
+                    color: Colors.orange[600],
                     size: 12,
                   ),
                 ),
@@ -621,7 +621,7 @@ class _LogListPageState extends State<LogListPage> {
           final hasLog = logsForDay.isNotEmpty;
           final hasWaterChange = hasLog && logsForDay.any((log) => log.isWaterChanged);
           final hasScheduledWaterChange = scheduledForDay.isNotEmpty;
-          
+
           return Stack(
             children: [
               Container(
@@ -646,8 +646,8 @@ class _LogListPageState extends State<LogListPage> {
                 Positioned.fill(
                   child: Center(
                     child: Icon(
-                      Icons.water_drop, 
-                      color: Colors.blue.withOpacity(0.4), 
+                      Icons.water_drop,
+                      color: Colors.blue.withOpacity(0.4),
                       size: 28,
                     ),
                   ),
@@ -657,8 +657,8 @@ class _LogListPageState extends State<LogListPage> {
                   right: 2,
                   top: 2,
                   child: Icon(
-                    Icons.schedule, 
-                    color: Colors.orange[600], 
+                    Icons.schedule,
+                    color: Colors.orange[600],
                     size: 12,
                   ),
                 ),
@@ -898,7 +898,7 @@ class _MockLogFormState extends State<_MockLogForm> {
                     ),
                   ],
                 ),
-                
+
                 // 顯示已選擇的預計下次換水日期
                 if (_isWaterChanged && _nextWaterChangeDate != null)
                   Container(
@@ -1010,4 +1010,4 @@ class _MockLogFormState extends State<_MockLogForm> {
       ],
     );
   }
-} 
+}

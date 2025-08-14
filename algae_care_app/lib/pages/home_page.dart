@@ -340,7 +340,7 @@ class _HomePageState extends State<HomePage> {
                 _buildEntryCard(
                   context,
                   icon: Icons.share,
-                  title: '社群分享',
+                  title: '分享成果',
                   color: Colors.green[100],
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SharePage())),
                 ),

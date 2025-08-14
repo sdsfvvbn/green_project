@@ -12,9 +12,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // 驗證主要元素存在
-      expect(find.text('社群分享'), findsOneWidget);
       expect(find.text('分享成果'), findsOneWidget);
+      expect(find.text('分享文字'), findsOneWidget);
       expect(find.text('選擇照片'), findsOneWidget);
+      expect(find.text('分享成果'), findsOneWidget);
       expect(find.text('快速分享到：'), findsOneWidget);
       expect(find.text('分享小貼士'), findsOneWidget);
     });
@@ -57,9 +58,44 @@ void main() {
       await tester.pumpAndSettle();
 
       // 驗證快速分享圖標存在
-      expect(find.byIcon(Icons.chat_bubble), findsOneWidget);
       expect(find.byIcon(Icons.facebook), findsOneWidget);
-      expect(find.byIcon(Icons.flutter_dash), findsOneWidget);
+      expect(find.byIcon(Icons.chat_bubble), findsOneWidget);
+      expect(find.byIcon(Icons.camera_alt), findsOneWidget);
+    });
+
+    testWidgets('成就統計區域應該存在', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: SharePage(),
+      ));
+
+      await tester.pumpAndSettle();
+
+      // 驗證成就統計區域存在
+      expect(find.text('成就徽章'), findsOneWidget);
+      expect(find.text('累積吸碳量'), findsOneWidget);
+      expect(find.text('記錄照片'), findsOneWidget);
+    });
+
+    testWidgets('文字編輯區域應該存在', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: SharePage(),
+      ));
+
+      await tester.pumpAndSettle();
+
+      // 驗證文字編輯區域存在
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('照片預覽區域應該存在', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(
+        home: SharePage(),
+      ));
+
+      await tester.pumpAndSettle();
+
+      // 驗證照片預覽區域存在
+      expect(find.text('尚未選擇照片'), findsOneWidget);
     });
   });
 }
