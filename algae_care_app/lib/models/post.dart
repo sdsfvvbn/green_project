@@ -2,7 +2,6 @@ class Post {
   final String id;
   final String author;
   final String content;
-  final List<String> imageUrls;
   final List<String> tags;
   final DateTime createdAt;
   final List<String> likedBy;
@@ -12,7 +11,6 @@ class Post {
     required this.id,
     required this.author,
     required this.content,
-    required this.imageUrls,
     required this.tags,
     required this.createdAt,
     this.likedBy = const [],
@@ -30,4 +28,4 @@ class Comment {
     required this.text,
     required this.createdAt,
   });
-} 
+}

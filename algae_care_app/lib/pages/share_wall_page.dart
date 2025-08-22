@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ShareWallPage extends StatefulWidget {
   const ShareWallPage({super.key});
@@ -18,7 +14,6 @@ class _ShareWallPageState extends State<ShareWallPage> {
       id: '1',
       author: 'AlgaeLover',
       content: '我的微藻今天超綠！',
-      imageUrls: [],
       tags: ['#綠藻', '#成長日誌'],
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
@@ -26,7 +21,6 @@ class _ShareWallPageState extends State<ShareWallPage> {
       id: '2',
       author: 'GreenMaster',
       content: '換水後狀態超好，推薦大家多曬太陽！',
-      imageUrls: [],
       tags: ['#換水', '#養殖技巧'],
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
@@ -46,9 +40,7 @@ class _ShareWallPageState extends State<ShareWallPage> {
 
   void _showPostDialog() async {
     String content = '';
-    List<String> imageUrls = [];
     List<String> tags = [];
-    final picker = ImagePicker();
     await showDialog(
       context: context,
       builder: (context) {
@@ -65,45 +57,11 @@ class _ShareWallPageState extends State<ShareWallPage> {
                   onChanged: (val) => content = val,
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.photo),
-                      label: const Text('選擇圖片'),
-                      onPressed: () async {
-                        final picked = await picker.pickMultiImage();
-                        if (picked != null && picked.isNotEmpty) {
-                          imageUrls = picked.map((f) => f.path).toList();
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    if (imageUrls.isNotEmpty)
-                      Expanded(
-                        child: SizedBox(
-                          height: 60,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: imageUrls.map((img) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: kIsWeb
-                                ? Icon(Icons.image, size: 48, color: Colors.grey)
-                                : Image.file(
-                                    File(img),
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                  ),
-                            )).toList(),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                // 已移除圖片選取與預覽
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
-                  children: ['#綠藻', '#成長日誌', '#換水', '#養殖技巧', '#成果照', '#其他']
+                  children: ['#綠藻', '#成長日誌', '#換水', '#養殖技巧', '#其他']
                       .map((t) => FilterChip(
                             label: Text(t),
                             selected: tags.contains(t),
@@ -136,7 +94,6 @@ class _ShareWallPageState extends State<ShareWallPage> {
                       id: DateTime.now().millisecondsSinceEpoch.toString(),
                       author: '你',
                       content: content,
-                      imageUrls: imageUrls,
                       tags: tags,
                       createdAt: DateTime.now(),
                     ),
@@ -197,17 +154,7 @@ class _ShareWallPageState extends State<ShareWallPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(post.content),
-                    if (post.imageUrls.isNotEmpty)
-                      SizedBox(
-                        height: 120,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: post.imageUrls.map((url) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover),
-                          )).toList(),
-                        ),
-                      ),
+                    // 已移除貼文圖片顯示區塊
                     Wrap(
                       spacing: 8,
                       children: post.tags.map((t) => Chip(label: Text(t))).toList(),
@@ -249,4 +196,4 @@ class _ShareWallPageState extends State<ShareWallPage> {
       ),
     );
   }
-} 
+}

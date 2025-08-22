@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io';
 import '../services/achievement_service.dart';
 
 class SharePage extends StatefulWidget {
@@ -15,7 +12,6 @@ class SharePage extends StatefulWidget {
 }
 
 class _SharePageState extends State<SharePage> {
-  XFile? _imageFile;
   int badgeCount = 0;
   int photoCount = 0;
   double totalCO2 = 0.0;
@@ -52,27 +48,7 @@ class _SharePageState extends State<SharePage> {
     }
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          _imageFile = image;
-        });
-      }
-    } catch (e) {
-      print('選擇圖片失敗: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('選擇圖片失敗：$e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
+  // 已移除圖片選擇功能
 
   void _showSuccessDialog() async {
     try {
@@ -177,11 +153,7 @@ class _SharePageState extends State<SharePage> {
       // 根據使用者的成就和進度生成分享文字
       String shareText = _generateShareText();
 
-      if (_imageFile != null) {
-        await Share.shareXFiles([XFile(_imageFile!.path)], text: shareText);
-      } else {
-        await Share.share(shareText);
-      }
+      await Share.share(shareText);
       _showSuccessDialog();
     } catch (e) {
       // 如果分享失敗，顯示錯誤訊息
@@ -639,81 +611,7 @@ class _SharePageState extends State<SharePage> {
               ),
             ),
 
-            // 圖片選擇區
-            Card(
-              color: Colors.purple[50],
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              margin: const EdgeInsets.only(bottom: 24),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.photo_library, color: Colors.purple[700]),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '選擇照片',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: _imageFile == null
-                          ? Column(
-                              children: [
-                                Icon(Icons.add_photo_alternate, color: Colors.purple[600], size: 48),
-                                const SizedBox(height: 8),
-                                const Text('尚未選擇照片'),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: kIsWeb
-                                      ? Icon(Icons.image, size: 120, color: Colors.grey)
-                                      : Image.file(
-                                          File(_imageFile!.path),
-                                          width: 120,
-                                          height: 120,
-                                          fit: BoxFit.cover,
-                                        ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      _imageFile = null;
-                                    });
-                                  },
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  label: const Text('移除照片', style: TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.add_photo_alternate),
-                        label: const Text('選擇照片'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          side: BorderSide(color: Colors.purple[300]!),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // 已移除圖片選擇區
 
             // 主要分享按鈕
             ElevatedButton.icon(
@@ -846,7 +744,7 @@ class _SharePageState extends State<SharePage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '• 選擇高質量的照片會讓分享更吸引人\n• 定期分享您的養殖進度\n• 使用相關的標籤增加曝光度',
+                            '• 定期分享您的養殖進度\n• 使用相關的標籤增加曝光度',
                             style: TextStyle(
                               color: Colors.amber[700],
                               fontSize: 12,
